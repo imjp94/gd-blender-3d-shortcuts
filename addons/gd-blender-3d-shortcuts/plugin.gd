@@ -287,7 +287,7 @@ func mouse_transform(event):
 	# Translation offset
 	var plane_transform = _camera.global_transform
 	plane_transform.origin = pivot_point
-	plane_transform.basis = plane_transform.basis.rotated(Vector3.LEFT, deg2rad(90))
+	plane_transform.basis = plane_transform.basis.rotated(plane_transform.basis.xform(Vector3.LEFT), deg2rad(90))
 	var plane
 	var axis_count = 3
 	if constraint_axis.x == 0:
