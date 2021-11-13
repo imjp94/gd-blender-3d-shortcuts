@@ -45,6 +45,7 @@ var _min_x = 0
 var _cache_global_transforms = []
 var _cache_transforms = [] # Nodes' local transform relative to pivot_point
 var _input_string = ""
+var _is_global_on_session = false
 
 
 func _init():
@@ -79,9 +80,9 @@ func _input(event):
 				match event.scancode:
 					KEY_Y:
 						if event.shift:
-							set_constraint_axis(Vector3.RIGHT + Vector3.BACK)
+							toggle_constraint_axis(Vector3.RIGHT + Vector3.BACK)
 						else:
-							set_constraint_axis(Vector3.UP)
+							toggle_constraint_axis(Vector3.UP)
 						get_tree().set_input_as_handled()
 
 func _on_snap_value_changed(text, session):
@@ -184,21 +185,21 @@ func forward_spatial_gui_input(camera, event):
 								return true
 					KEY_X:
 						if event.shift:
-							set_constraint_axis(Vector3.UP + Vector3.BACK)
+							toggle_constraint_axis(Vector3.UP + Vector3.BACK)
 						else:
-							set_constraint_axis(Vector3.RIGHT)
+							toggle_constraint_axis(Vector3.RIGHT)
 						return true
 					KEY_Y:
 						if event.shift:
-							set_constraint_axis(Vector3.RIGHT + Vector3.BACK)
+							toggle_constraint_axis(Vector3.RIGHT + Vector3.BACK)
 						else:
-							set_constraint_axis(Vector3.UP)
+							toggle_constraint_axis(Vector3.UP)
 						return true
 					KEY_Z:
 						if event.shift:
-							set_constraint_axis(Vector3.RIGHT + Vector3.UP)
+							toggle_constraint_axis(Vector3.RIGHT + Vector3.UP)
 						else:
-							set_constraint_axis(Vector3.BACK)
+							toggle_constraint_axis(Vector3.BACK)
 						return true
 					KEY_MINUS:
 						toggle_input_string_sign()
@@ -389,6 +390,7 @@ func update_pivot_point():
 func start_session(session, camera, event):
 	current_session = session
 	_camera = camera
+	_is_global_on_session = is_global
 	update_pivot_point()
 	cache_selected_nodes_transforms()
 
@@ -401,6 +403,10 @@ func start_session(session, camera, event):
 
 func end_session():
 	_is_editing = get_editor_interface().get_selection().get_transformable_selected_nodes().size() > 0
+	# Manually set is_global to avoid triggering revert()
+	if is_instance_valid(local_space_button):
+		local_space_button.pressed = !_is_global_on_session
+	is_global = _is_global_on_session
 	clear_session()
 	update_overlays()
 
@@ -480,9 +486,31 @@ func sync_settings():
 	if scale_snap_line_edit:
 		scale_snap = float(scale_snap_line_edit.text) / 100.0
 	if local_space_button:
-		set_is_global(!local_space_button.pressed)
+		is_global = !local_space_button.pressed
 	if snap_button:
 		is_snapping = snap_button.pressed
+
+# Repeatedly applying same axis will results in toggling is_global, just like pressing xx, yy or zz in blender
+func toggle_constraint_axis(axis):
+	# Following order as below:
+	# 1) Apply constraint on current mode
+	# 2) Toggle mode
+	# 3) Toggle mode again, and remove constraint
+	if is_global == _is_global_on_session:
+		if not constraint_axis.is_equal_approx(axis):
+			# 1
+			set_constraint_axis(axis)
+		else:
+			# 2
+			set_is_global(!_is_global_on_session)
+	else:
+		if constraint_axis.is_equal_approx(axis):
+			# 3
+			set_is_global(_is_global_on_session)
+			set_constraint_axis(Vector3.ONE)
+		else:
+			# Others situation
+			set_constraint_axis(axis)
 
 func toggle_input_string_sign():
 	if _input_string.begins_with("-"):
@@ -524,6 +552,8 @@ func set_constraint_axis(v):
 
 func set_is_global(v):
 	if is_global != v:
+		if is_instance_valid(local_space_button):
+			local_space_button.pressed = !v
 		revert()
 		is_global = v
 		draw_axises()
