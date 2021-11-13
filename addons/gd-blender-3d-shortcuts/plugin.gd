@@ -29,6 +29,8 @@ var scale_snap = 0.1
 var is_snapping = false
 var is_global = true
 var axis_length = 1000
+var precision_mode = false
+var precision_factor = 0.1
 
 var _is_editing = false
 var _camera
@@ -152,6 +154,10 @@ func forward_spatial_gui_input(camera, event):
 					end_session()
 					return true
 			
+			if event.scancode == KEY_SHIFT:
+				precision_mode = event.pressed
+				forward = true
+
 			if event.pressed:
 				var event_text = event.as_text()
 				if append_input_string(event_text):
@@ -328,12 +334,14 @@ func mouse_transform(event):
 				_editing_transform = _editing_transform.translated(offset)
 				_applying_transform.origin = _editing_transform.origin
 				if is_snapping:
-					_applying_transform.origin = _applying_transform.origin.snapped(Vector3.ONE * translate_snap)
+					var snap = Vector3.ONE * (translate_snap if not precision_mode else translate_snap * precision_factor)
+					_applying_transform.origin = _applying_transform.origin.snapped(snap)
 			SESSION.ROTATE:
 				_editing_transform.basis = _editing_transform.basis.rotated((-_camera.global_transform.basis.z * constraint_axis).normalized(), angle_offset)
 				var quat = _editing_transform.basis.get_rotation_quat()
 				if is_snapping:
-					quat.set_euler(quat.get_euler().snapped(Vector3.ONE * rotate_snap))
+					var snap = Vector3.ONE * (rotate_snap if not precision_mode else rotate_snap * precision_factor)
+					quat.set_euler(quat.get_euler().snapped(snap))
 				_applying_transform.basis = Basis(quat)
 			SESSION.SCALE:
 				if constraint_axis.x:
@@ -344,9 +352,10 @@ func mouse_transform(event):
 					_editing_transform.basis.z = Vector3.BACK * (1 + _cummulative_center_offset)
 				_applying_transform.basis = _editing_transform.basis
 				if is_snapping:
-					_applying_transform.basis.x = _applying_transform.basis.x.snapped(Vector3.ONE * scale_snap)
-					_applying_transform.basis.y = _applying_transform.basis.y.snapped(Vector3.ONE * scale_snap)
-					_applying_transform.basis.z = _applying_transform.basis.z.snapped(Vector3.ONE * scale_snap)
+					var snap = Vector3.ONE * (scale_snap if not precision_mode else scale_snap * precision_factor)
+					_applying_transform.basis.x = _applying_transform.basis.x.snapped(snap)
+					_applying_transform.basis.y = _applying_transform.basis.y.snapped(snap)
+					_applying_transform.basis.z = _applying_transform.basis.z.snapped(snap)
 
 	var nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
 	var t = _applying_transform
@@ -449,6 +458,7 @@ func clear_session():
 	current_session = SESSION.NONE
 	constraint_axis = Vector3.ONE
 	pivot_point = Vector3.ZERO
+	precision_mode = false
 	_editing_transform = Transform.IDENTITY
 	_applying_transform = Transform.IDENTITY
 	_last_world_pos = Vector3.ZERO
