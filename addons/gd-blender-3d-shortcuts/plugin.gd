@@ -460,6 +460,7 @@ func revert():
 	Utils.revert_transform(nodes, _cache_global_transforms)
 	_editing_transform = Transform.IDENTITY
 	_applying_transform = Transform.IDENTITY
+	_last_world_pos = Vector3.ZERO
 	axis_ig.clear()
 
 func clear_session():
