@@ -97,6 +97,30 @@ static func transform_to_plane(t):
 	var o = t.origin
 	return Plane(a + o, b + o, c + o)
 
+# Return new position when out of bounds
+static func infinite_rect(rect, from, to):
+	# Clamp from position to rect first, so it won't hit current side
+	from = Vector2(clamp(from.x, rect.position.x + 2, rect.size.x - 2), clamp(from.y, rect.position.y + 2, rect.size.y - 2))
+	# Intersect with sides of rect
+	var intersection
+	# Top
+	intersection = Geometry.segment_intersects_segment_2d(rect.position, Vector2(rect.size.x, rect.position.y), from, to)
+	if intersection:
+		return intersection
+	# Left
+	intersection = Geometry.segment_intersects_segment_2d(rect.position, Vector2(rect.position.x, rect.size.y), from, to)
+	if intersection:
+		return intersection
+	# Right
+	intersection = Geometry.segment_intersects_segment_2d(rect.size, Vector2(rect.size.x, rect.position.y), from, to)
+	if intersection:
+		return intersection
+	# Bottom
+	intersection = Geometry.segment_intersects_segment_2d(rect.size, Vector2(rect.position.x, rect.size.y), from, to)
+	if intersection:
+		return intersection
+	return null
+
 static func draw_axis(ig, origin, axis, length, color):
 	var from = origin + (-axis * length / 2)
 	var to = origin + (axis * length / 2)
