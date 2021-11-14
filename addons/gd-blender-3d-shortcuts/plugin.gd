@@ -248,6 +248,11 @@ func forward_spatial_gui_input(camera, event):
 func forward_spatial_draw_over_viewport(overlay):
 	if not overlay_control:
 		overlay_control = overlay
+	if current_session == SESSION.NONE:
+		if overlay_label.get_parent() != null:
+			overlay_label.get_parent().remove_child(overlay_label)
+		return
+
 	var selection_box_color = get_editor_interface().get_editor_settings().get_setting("editors/3d/selection_box_color")
 	var snapped = "snapped" if is_snapping else ""
 	var global_or_local = "global" if is_global else "local"
@@ -262,27 +267,23 @@ func forward_spatial_draw_over_viewport(overlay):
 	if along_axis.length():
 		along_axis = "along " + along_axis
 
-	if current_session != SESSION.NONE:
-		if overlay_label.get_parent() == null:
-			overlay.add_child(overlay_label)
-			overlay_label.set_anchors_and_margins_preset(Control.PRESET_BOTTOM_LEFT)
-			overlay_label.rect_position += Vector2(8, -8)
-		match current_session:
-			SESSION.TRANSLATE:
-				var translation = _applying_transform.origin
-				overlay_label.text = ("Translate (%.3f, %.3f, %.3f) %s %s %s" % [translation.x, translation.y, translation.z, global_or_local, along_axis, snapped])
-			SESSION.ROTATE:
-				var rotation = _applying_transform.basis.get_euler()
-				overlay_label.text = ("Rotate (%.3f, %.3f, %.3f) %s %s %s" % [rad2deg(rotation.x), rad2deg(rotation.y), rad2deg(rotation.z), global_or_local, along_axis, snapped])
-			SESSION.SCALE:
-				var scale = _applying_transform.basis.get_scale()
-				overlay_label.text = ("Scale (%.3f, %.3f, %.3f) %s %s %s" % [scale.x, scale.y, scale.z, global_or_local, along_axis, snapped])
-		if _input_string:
-			overlay_label.text += "(%s)" % _input_string
-		Utils.draw_dashed_line(overlay, _camera.unproject_position(pivot_point), overlay.get_local_mouse_position(), selection_box_color, 1, 5, true, true)
-	else:
-		if overlay_label.get_parent() != null:
-			overlay_label.get_parent().remove_child(overlay_label)
+	if overlay_label.get_parent() == null:
+		overlay.add_child(overlay_label)
+		overlay_label.set_anchors_and_margins_preset(Control.PRESET_BOTTOM_LEFT)
+		overlay_label.rect_position += Vector2(8, -8)
+	match current_session:
+		SESSION.TRANSLATE:
+			var translation = _applying_transform.origin
+			overlay_label.text = ("Translate (%.3f, %.3f, %.3f) %s %s %s" % [translation.x, translation.y, translation.z, global_or_local, along_axis, snapped])
+		SESSION.ROTATE:
+			var rotation = _applying_transform.basis.get_euler()
+			overlay_label.text = ("Rotate (%.3f, %.3f, %.3f) %s %s %s" % [rad2deg(rotation.x), rad2deg(rotation.y), rad2deg(rotation.z), global_or_local, along_axis, snapped])
+		SESSION.SCALE:
+			var scale = _applying_transform.basis.get_scale()
+			overlay_label.text = ("Scale (%.3f, %.3f, %.3f) %s %s %s" % [scale.x, scale.y, scale.z, global_or_local, along_axis, snapped])
+	if _input_string:
+		overlay_label.text += "(%s)" % _input_string
+	Utils.draw_dashed_line(overlay, _camera.unproject_position(pivot_point), overlay.get_local_mouse_position(), selection_box_color, 1, 5, true, true)
 
 func text_transform(text):
 	var input_value = float(text)
