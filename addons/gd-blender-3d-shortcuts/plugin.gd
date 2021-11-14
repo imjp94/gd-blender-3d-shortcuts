@@ -15,6 +15,7 @@ var rotate_snap_line_edit
 var scale_snap_line_edit
 var local_space_button
 var snap_button
+var overlay_control
 
 var overlay_label = Label.new()
 var axis_ig
@@ -85,6 +86,16 @@ func _input(event):
 						else:
 							toggle_constraint_axis(Vector3.UP)
 						get_tree().set_input_as_handled()
+	
+	if event is InputEventMouseMotion:
+		if current_session != SESSION.NONE and overlay_control:
+			# Infinite mouse movement
+			var rect = overlay_control.get_rect()
+			var local_mouse_pos = overlay_control.get_local_mouse_position()
+			if not rect.has_point(local_mouse_pos):
+				var warp_pos = Utils.infinite_rect(rect, local_mouse_pos, -event.speed.normalized() * rect.size.length())
+				if warp_pos:
+					Input.warp_mouse_position(overlay_control.rect_global_position + warp_pos)
 
 func _on_snap_value_changed(text, session):
 	match session:
@@ -233,6 +244,8 @@ func forward_spatial_gui_input(camera, event):
 	return forward
 	
 func forward_spatial_draw_over_viewport(overlay):
+	if not overlay_control:
+		overlay_control = overlay
 	var selection_box_color = get_editor_interface().get_editor_settings().get_setting("editors/3d/selection_box_color")
 	var snapped = "snapped" if is_snapping else ""
 	var global_or_local = "global" if is_global else "local"
