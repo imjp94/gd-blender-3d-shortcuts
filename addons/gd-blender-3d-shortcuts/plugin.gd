@@ -37,6 +37,7 @@ var _camera
 var _editing_transform = Transform.IDENTITY
 var _applying_transform = Transform.IDENTITY
 var _last_world_pos = Vector3.ZERO
+var _init_angle = NAN
 var _last_angle = 0
 var _last_center_offset = 0
 var _cummulative_center_offset = 0
@@ -291,6 +292,9 @@ func text_transform(text):
 		Utils.apply_transform(nodes, t, _cache_global_transforms)
 
 func mouse_transform(event):
+	if is_nan(_init_angle):
+		var screen_origin = _camera.unproject_position(pivot_point)
+		_init_angle = event.position.angle_to_point(screen_origin)
 	# Translation offset
 	var plane_transform = _camera.global_transform
 	plane_transform.origin = pivot_point
@@ -316,7 +320,7 @@ func mouse_transform(event):
 	offset = offset.snapped(Vector3.ONE * 0.001)
 	# Rotation offset
 	var screen_origin = _camera.unproject_position(pivot_point)
-	var angle = event.position.angle_to_point(screen_origin)
+	var angle = event.position.angle_to_point(screen_origin) - _init_angle
 	var angle_offset = angle - _last_angle
 	angle_offset = stepify(angle_offset, 0.001)
 	# Scale offset
@@ -468,6 +472,7 @@ func clear_session():
 	_editing_transform = Transform.IDENTITY
 	_applying_transform = Transform.IDENTITY
 	_last_world_pos = Vector3.ZERO
+	_init_angle = NAN
 	_last_angle = 0
 	_last_center_offset = 0
 	_cummulative_center_offset = 0
