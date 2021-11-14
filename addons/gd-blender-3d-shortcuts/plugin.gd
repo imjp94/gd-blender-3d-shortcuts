@@ -292,6 +292,9 @@ func text_transform(text):
 		Utils.apply_transform(nodes, t, _cache_global_transforms)
 
 func mouse_transform(event):
+	var nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
+	var is_single_node = nodes.size() == 1
+	var node1 = nodes[0]
 	if is_nan(_init_angle):
 		var screen_origin = _camera.unproject_position(pivot_point)
 		_init_angle = event.position.angle_to_point(screen_origin)
@@ -299,20 +302,16 @@ func mouse_transform(event):
 	var plane_transform = _camera.global_transform
 	plane_transform.origin = pivot_point
 	plane_transform.basis = plane_transform.basis.rotated(plane_transform.basis.xform(Vector3.LEFT), deg2rad(90))
-	var plane
-	var axis_count = 3
-	if constraint_axis.x == 0:
-		axis_count -= 1
-	if constraint_axis.y == 0:
-		axis_count -= 1
-	if constraint_axis.z == 0:
-		axis_count -= 1
+	var plane = Utils.transform_to_plane(plane_transform)
+	var axis_count = get_constraint_axis_count()
 	if axis_count == 2:
 		var normal = (Vector3.ONE - constraint_axis).normalized()
+		if is_single_node and not is_global:
+			normal = node1.global_transform.basis.xform(normal)
 		plane = Plane(normal, (normal * pivot_point).length())
-	else:
-		plane = Utils.transform_to_plane(plane_transform)
 	var world_pos = Utils.project_on_plane(_camera, event.position, plane)
+	if not is_global and is_single_node and axis_count < 3:
+		world_pos = node1.global_transform.basis.xform_inv(world_pos)
 	if not _last_world_pos:
 		_last_world_pos = world_pos
 	var offset = world_pos - _last_world_pos
@@ -362,7 +361,6 @@ func mouse_transform(event):
 					_applying_transform.basis.y = _applying_transform.basis.y.snapped(snap)
 					_applying_transform.basis.z = _applying_transform.basis.z.snapped(snap)
 
-	var nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
 	var t = _applying_transform
 	if is_global or (constraint_axis.is_equal_approx(Vector3.ONE) and current_session == SESSION.TRANSLATE):
 		t.origin += pivot_point
@@ -543,6 +541,16 @@ func input_string_changed():
 		var nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
 		Utils.revert_transform(nodes, _cache_global_transforms)
 	update_overlays()
+
+func get_constraint_axis_count():
+	var axis_count = 3
+	if constraint_axis.x == 0:
+		axis_count -= 1
+	if constraint_axis.y == 0:
+		axis_count -= 1
+	if constraint_axis.z == 0:
+		axis_count -= 1
+	return axis_count
 
 func set_constraint_axis(v):
 	revert()
