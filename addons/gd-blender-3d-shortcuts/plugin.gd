@@ -132,11 +132,11 @@ func edit(object):
 			axis_ig = ImmediateGeometry.new()
 			axis_ig.material_override = axis_ig_material
 		if axis_ig.get_parent() == null:
-			scene_root.add_child(axis_ig)
+			scene_root.get_parent().add_child(axis_ig)
 		else:
 			if axis_ig.get_parent() != scene_root:
 				axis_ig.get_parent().remove_child(axis_ig)
-				scene_root.add_child(axis_ig)
+				scene_root.get_parent().add_child(axis_ig)
 
 func forward_spatial_gui_input(camera, event):
 	var forward = false
