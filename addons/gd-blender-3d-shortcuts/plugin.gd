@@ -48,6 +48,7 @@ var _cache_global_transforms = []
 var _cache_transforms = [] # Nodes' local transform relative to pivot_point
 var _input_string = ""
 var _is_global_on_session = false
+var _is_warping_mouse = false
 
 
 func _init():
@@ -96,6 +97,7 @@ func _input(event):
 				var warp_pos = Utils.infinite_rect(rect, local_mouse_pos, -event.speed.normalized() * rect.size.length())
 				if warp_pos:
 					Input.warp_mouse_position(overlay_control.rect_global_position + warp_pos)
+					_is_warping_mouse = true
 
 func _on_snap_value_changed(text, session):
 	match session:
@@ -330,6 +332,8 @@ func mouse_transform(event):
 	var offset = world_pos - _last_world_pos
 	offset *= constraint_axis
 	offset = offset.snapped(Vector3.ONE * 0.001)
+	if _is_warping_mouse:
+		offset = Vector3.ZERO
 	# Rotation offset
 	var screen_origin = _camera.unproject_position(pivot_point)
 	var angle = event.position.angle_to_point(screen_origin) - _init_angle
@@ -344,6 +348,8 @@ func mouse_transform(event):
 		_last_center_offset = center_value
 	var center_offset = center_value - _last_center_offset
 	center_offset = stepify(center_offset, 0.001)
+	if _is_warping_mouse:
+		center_offset = 0
 	_cummulative_center_offset += center_offset
 	if not _input_string:
 		match current_session:
@@ -383,6 +389,7 @@ func mouse_transform(event):
 	_last_world_pos = world_pos
 	_last_center_offset = center_value
 	_last_angle = angle
+	_is_warping_mouse = false
 
 func cache_selected_nodes_transforms():
 	var nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
@@ -493,6 +500,7 @@ func clear_session():
 	_cache_global_transforms = []
 	_cache_transforms = []
 	_input_string = ""
+	_is_warping_mouse = false
 	axis_ig.clear()
 
 func sync_settings():
