@@ -283,7 +283,9 @@ func forward_spatial_draw_over_viewport(overlay):
 			overlay_label.text = ("Scale (%.3f, %.3f, %.3f) %s %s %s" % [scale.x, scale.y, scale.z, global_or_local, along_axis, snapped])
 	if _input_string:
 		overlay_label.text += "(%s)" % _input_string
-	Utils.draw_dashed_line(overlay, _camera.unproject_position(pivot_point), overlay.get_local_mouse_position(), selection_box_color, 1, 5, true, true)
+	var is_pivot_point_behind_camera = _camera.is_position_behind(pivot_point)
+	var screen_origin = overlay.rect_size / 2.0 if is_pivot_point_behind_camera else _camera.unproject_position(pivot_point)
+	Utils.draw_dashed_line(overlay, screen_origin, overlay.get_local_mouse_position(), selection_box_color, 1, 5, true, true)
 
 func text_transform(text):
 	var input_value = float(text)
@@ -311,6 +313,7 @@ func mouse_transform(event):
 	var nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
 	var is_single_node = nodes.size() == 1
 	var node1 = nodes[0]
+	var is_pivot_point_behind_camera = _camera.is_position_behind(pivot_point)
 	if is_nan(_init_angle):
 		var screen_origin = _camera.unproject_position(pivot_point)
 		_init_angle = event.position.angle_to_point(screen_origin)
@@ -318,13 +321,15 @@ func mouse_transform(event):
 	var plane_transform = _camera.global_transform
 	plane_transform.origin = pivot_point
 	plane_transform.basis = plane_transform.basis.rotated(plane_transform.basis.xform(Vector3.LEFT), deg2rad(90))
+	if is_pivot_point_behind_camera:
+		plane_transform.origin = _camera.global_transform.origin + -_camera.global_transform.basis.z * 10.0
 	var plane = Utils.transform_to_plane(plane_transform)
 	var axis_count = get_constraint_axis_count()
 	if axis_count == 2:
 		var normal = (Vector3.ONE - constraint_axis).normalized()
 		if is_single_node and not is_global:
 			normal = node1.global_transform.basis.xform(normal)
-		plane = Plane(normal, (normal * pivot_point).length())
+		plane = Plane(normal, (normal * plane_transform.origin).length())
 	var world_pos = Utils.project_on_plane(_camera, event.position, plane)
 	if not is_global and is_single_node and axis_count < 3:
 		world_pos = node1.global_transform.basis.xform_inv(world_pos)
@@ -337,6 +342,8 @@ func mouse_transform(event):
 		offset = Vector3.ZERO
 	# Rotation offset
 	var screen_origin = _camera.unproject_position(pivot_point)
+	if is_pivot_point_behind_camera:
+		screen_origin = overlay_control.rect_size / 2.0
 	var angle = event.position.angle_to_point(screen_origin) - _init_angle
 	var angle_offset = angle - _last_angle
 	angle_offset = stepify(angle_offset, 0.001)
@@ -612,7 +619,9 @@ func draw_axises():
 			var axis = axis_line.get("axis")
 			var color = axis_line.get("color")
 			if is_global:
-				Utils.draw_axis(axis_ig, pivot_point, axis, axis_length, color)
+				var is_pivot_point_behind_camera = _camera.is_position_behind(pivot_point)
+				var axis_origin = _camera.global_transform.origin + -_camera.global_transform.basis.z * 10.0 if is_pivot_point_behind_camera else pivot_point
+				Utils.draw_axis(axis_ig, axis_origin, axis, axis_length, color)
 			else:
 				for node in nodes:
 					Utils.draw_axis(axis_ig, node.global_transform.origin, node.global_transform.basis.xform(axis), axis_length, color)
