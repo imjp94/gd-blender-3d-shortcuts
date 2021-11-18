@@ -418,6 +418,8 @@ func update_pivot_point():
 	pivot_point = aabb.position + aabb.size / 2.0
 
 func start_session(session, camera, event):
+	if get_editor_interface().get_selection().get_transformable_selected_nodes().size() == 0:
+		return
 	current_session = session
 	_camera = camera
 	_is_global_on_session = is_global
