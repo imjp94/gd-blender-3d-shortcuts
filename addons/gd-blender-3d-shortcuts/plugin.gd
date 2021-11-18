@@ -55,6 +55,8 @@ func _init():
 	axis_ig_material.flags_unshaded = true
 	axis_ig_material.vertex_color_use_as_albedo = true
 
+	overlay_label.set("custom_colors/font_color_shadow", Color.black)
+
 func _ready():
 	var spatial_editor = Utils.get_spatial_editor(get_editor_interface().get_base_control())
 	var snap_dialog = Utils.get_snap_dialog(spatial_editor)
