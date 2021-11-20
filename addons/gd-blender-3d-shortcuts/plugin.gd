@@ -18,6 +18,7 @@ var scale_snap_line_edit
 var local_space_button
 var snap_button
 var overlay_control
+var spatial_editor_viewport
 
 var overlay_label = Label.new()
 var axis_ig
@@ -73,11 +74,18 @@ func _ready():
 	local_space_button.connect("toggled", self, "_on_local_space_button_toggled")
 	snap_button = Utils.get_spatial_editor_snap_button(spatial_editor)
 	snap_button.connect("toggled", self, "_on_snap_button_toggled")
+	var spatial_editor_viewport_container = Utils.get_spatial_editor_viewport_container(spatial_editor)
+	if spatial_editor_viewport_container:
+		spatial_editor_viewport = Utils.get_spatial_editor_viewport(spatial_editor_viewport_container)
 	sync_settings()
 
 func _input(event):
 	if event is InputEventKey:
 		if event.pressed:
+			match event.scancode:
+				KEY_Z:
+					if not (event.control or event.alt or event.shift) and current_session == SESSION.NONE:
+						switch_display_mode()
 			# Hacky way to intercept default shortcut behavior when in session
 			if current_session != SESSION.NONE:
 				var event_text = event.as_text()
@@ -533,6 +541,13 @@ func sync_settings():
 		is_global = !local_space_button.pressed
 	if snap_button:
 		is_snapping = snap_button.pressed
+
+func switch_display_mode():
+	if spatial_editor_viewport:
+		if spatial_editor_viewport.debug_draw == Viewport.DEBUG_DRAW_WIREFRAME:
+			spatial_editor_viewport.debug_draw = 0
+		else:
+			spatial_editor_viewport.debug_draw += 1
 
 # Repeatedly applying same axis will results in toggling is_global, just like pressing xx, yy or zz in blender
 func toggle_constraint_axis(axis):
