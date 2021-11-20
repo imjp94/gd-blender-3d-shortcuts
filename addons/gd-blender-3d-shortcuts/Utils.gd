@@ -54,6 +54,18 @@ static func get_spatial_editor(base_control):
 		if child.get_class() == "SpatialEditor":
 			return child
 
+static func get_spatial_editor_viewport_container(spatial_editor):
+	var children = recursive_get_children(spatial_editor)
+	for child in children:
+		if child.get_class() == "SpatialEditorViewportContainer":
+			return child
+
+static func get_spatial_editor_viewport(spatial_editor_viewport_container):
+	var children = recursive_get_children(spatial_editor_viewport_container)
+	for child in children:
+		if child.get_class() == "Viewport":
+			return child
+
 static func get_snap_dialog(spatial_editor):
 	var children = recursive_get_children(spatial_editor)
 	for child in children:
