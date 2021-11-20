@@ -3,6 +3,8 @@ extends EditorPlugin
 
 const Utils = preload("Utils.gd")
 
+const DEFAULT_LINE_COLOR = Color.white
+
 enum SESSION {
 	TRANSLATE,
 	ROTATE,
@@ -255,7 +257,10 @@ func forward_spatial_draw_over_viewport(overlay):
 			overlay_label.get_parent().remove_child(overlay_label)
 		return
 
-	var selection_box_color = get_editor_interface().get_editor_settings().get_setting("editors/3d/selection_box_color")
+	var editor_settings = get_editor_interface().get_editor_settings()
+	var line_color = DEFAULT_LINE_COLOR
+	if editor_settings.has_setting("editors/3d/selection_box_color"):
+		line_color = editor_settings.get_setting("editors/3d/selection_box_color")
 	var snapped = "snapped" if is_snapping else ""
 	var global_or_local = "global" if is_global else "local"
 	var along_axis = ""
@@ -287,7 +292,7 @@ func forward_spatial_draw_over_viewport(overlay):
 		overlay_label.text += "(%s)" % _input_string
 	var is_pivot_point_behind_camera = _camera.is_position_behind(pivot_point)
 	var screen_origin = overlay.rect_size / 2.0 if is_pivot_point_behind_camera else _camera.unproject_position(pivot_point)
-	Utils.draw_dashed_line(overlay, screen_origin, overlay.get_local_mouse_position(), selection_box_color, 1, 5, true, true)
+	Utils.draw_dashed_line(overlay, screen_origin, overlay.get_local_mouse_position(), line_color, 1, 5, true, true)
 
 func text_transform(text):
 	var input_value = float(text)
