@@ -370,12 +370,14 @@ func mouse_transform(event):
 					var snap = Vector3.ONE * (translate_snap if not precision_mode else translate_snap * precision_factor)
 					_applying_transform.origin = _applying_transform.origin.snapped(snap)
 			SESSION.ROTATE:
-				_editing_transform.basis = _editing_transform.basis.rotated((-_camera.global_transform.basis.z * constraint_axis).normalized(), angle_offset)
-				var quat = _editing_transform.basis.get_rotation_quat()
-				if is_snapping:
-					var snap = Vector3.ONE * (rotate_snap if not precision_mode else rotate_snap * precision_factor)
-					quat.set_euler(quat.get_euler().snapped(snap))
-				_applying_transform.basis = Basis(quat)
+				var rotation_axis = (-_camera.global_transform.basis.z * constraint_axis).normalized()
+				if not rotation_axis.is_equal_approx(Vector3.ZERO):
+					_editing_transform.basis = _editing_transform.basis.rotated(rotation_axis, angle_offset)
+					var quat = _editing_transform.basis.get_rotation_quat()
+					if is_snapping:
+						var snap = Vector3.ONE * (rotate_snap if not precision_mode else rotate_snap * precision_factor)
+						quat.set_euler(quat.get_euler().snapped(snap))
+					_applying_transform.basis = Basis(quat)
 			SESSION.SCALE:
 				if constraint_axis.x:
 					_editing_transform.basis.x = Vector3.RIGHT * (1 + _cummulative_center_offset)
