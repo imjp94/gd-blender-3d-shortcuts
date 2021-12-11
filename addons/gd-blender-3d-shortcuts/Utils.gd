@@ -3,7 +3,7 @@ static func apply_transform(nodes, transform, cache_global_transforms):
 	for node in nodes:
 		var cache_global_transform = cache_global_transforms[i]
 		node.global_transform.origin = cache_global_transform.origin
-		node.global_transform.origin += cache_global_transform.basis.xform(transform.origin)
+		node.global_transform.origin += cache_global_transform.basis.get_rotation_quat().xform(transform.origin)
 		node.global_transform.basis.x = cache_global_transform.basis.xform(transform.basis.x)
 		node.global_transform.basis.y = cache_global_transform.basis.xform(transform.basis.y)
 		node.global_transform.basis.z = cache_global_transform.basis.xform(transform.basis.z)

@@ -347,7 +347,8 @@ func mouse_transform(event):
 		plane = Plane(normal, (normal * plane_transform.origin).length())
 	var world_pos = Utils.project_on_plane(_camera, event.position, plane)
 	if not is_global and is_single_node and axis_count < 3:
-		world_pos = node1.global_transform.basis.xform_inv(world_pos)
+		var normalized_node1_basis = node1.global_transform.basis.scaled(Vector3.ONE / node1.global_transform.basis.get_scale())
+		world_pos = normalized_node1_basis.xform_inv(world_pos)
 	if not _last_world_pos:
 		_last_world_pos = world_pos
 	var offset = world_pos - _last_world_pos
