@@ -35,10 +35,6 @@ static func reset_scale(nodes):
 		var quat = node.transform.basis.get_rotation_quat()
 		node.transform.basis = Basis(quat)
 
-static func hide_nodes(nodes, is_hide=true):
-	for node in nodes:
-		node.visible = !is_hide
-
 static func recursive_get_children(node):
 	var children = node.get_children()
 	if children.size() == 0:
