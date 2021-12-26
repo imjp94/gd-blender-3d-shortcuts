@@ -25,6 +25,8 @@ or
 
 2. Enable it from Project -> Settings -> Plugins
 
+3. (Optional) Clear spatial editor scale mode shortcut as it conflicts with rotate shortcut, Editor Settings > Shortcuts > Spatial Editor > Scale Mode
+
 ## Shortcuts
 
 - Translate: G

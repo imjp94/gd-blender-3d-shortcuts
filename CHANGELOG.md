@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- Features:
+  - Support multiple editor viewports
+- Bugfixes:
+  - Fix translation along local axis is affected by node's scale
+  - Fix cant translate with 2 axis constraint when position of objects are too lower from world origin
+
 ## 0.2.0
 
 - Features:
