@@ -18,7 +18,8 @@ var scale_snap_line_edit
 var local_space_button
 var snap_button
 var overlay_control
-var spatial_editor_viewport
+var spatial_editor_viewports
+
 
 var overlay_label = Label.new()
 var axis_ig
@@ -76,7 +77,7 @@ func _ready():
 	snap_button.connect("toggled", self, "_on_snap_button_toggled")
 	var spatial_editor_viewport_container = Utils.get_spatial_editor_viewport_container(spatial_editor)
 	if spatial_editor_viewport_container:
-		spatial_editor_viewport = Utils.get_spatial_editor_viewport(spatial_editor_viewport_container)
+		spatial_editor_viewports = Utils.get_spatial_editor_viewports(spatial_editor_viewport_container)
 	sync_settings()
 
 func _input(event):
@@ -258,8 +259,6 @@ func forward_spatial_gui_input(camera, event):
 	return forward
 	
 func forward_spatial_draw_over_viewport(overlay):
-	if not overlay_control:
-		overlay_control = overlay
 	if current_session == SESSION.NONE:
 		if overlay_label.get_parent() != null:
 			overlay_label.get_parent().remove_child(overlay_label)
@@ -283,7 +282,7 @@ func forward_spatial_draw_over_viewport(overlay):
 		along_axis = "along " + along_axis
 
 	if overlay_label.get_parent() == null:
-		overlay.add_child(overlay_label)
+		overlay_control.add_child(overlay_label)
 		overlay_label.set_anchors_and_margins_preset(Control.PRESET_BOTTOM_LEFT)
 		overlay_label.rect_position += Vector2(8, -8)
 	match current_session:
@@ -450,6 +449,8 @@ func start_session(session, camera, event):
 		return
 
 	update_overlays()
+	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
+	overlay_control = Utils.get_spatial_editor_viewport_control(spatial_editor_viewport) if spatial_editor_viewport else null
 
 func end_session():
 	_is_editing = get_editor_interface().get_selection().get_transformable_selected_nodes().size() > 0
@@ -544,11 +545,13 @@ func sync_settings():
 		is_snapping = snap_button.pressed
 
 func switch_display_mode():
+	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
 	if spatial_editor_viewport:
-		if spatial_editor_viewport.debug_draw == Viewport.DEBUG_DRAW_WIREFRAME:
-			spatial_editor_viewport.debug_draw = 0
+		var viewport = Utils.get_spatial_editor_viewport_viewport(spatial_editor_viewport)
+		if viewport.debug_draw == Viewport.DEBUG_DRAW_WIREFRAME:
+			viewport.debug_draw = 0
 		else:
-			spatial_editor_viewport.debug_draw += 1
+			viewport.debug_draw += 1
 
 # Repeatedly applying same axis will results in toggling is_global, just like pressing xx, yy or zz in blender
 func toggle_constraint_axis(axis):

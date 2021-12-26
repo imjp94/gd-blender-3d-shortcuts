@@ -60,11 +60,31 @@ static func get_spatial_editor_viewport_container(spatial_editor):
 		if child.get_class() == "SpatialEditorViewportContainer":
 			return child
 
-static func get_spatial_editor_viewport(spatial_editor_viewport_container):
-	var children = recursive_get_children(spatial_editor_viewport_container)
+static func get_spatial_editor_viewports(spatial_editor_viewport):
+	var children = recursive_get_children(spatial_editor_viewport)
+	var spatial_editor_viewports = []
+	for child in children:
+		if child.get_class() == "SpatialEditorViewport":
+			spatial_editor_viewports.append(child)
+	return spatial_editor_viewports
+
+static func get_spatial_editor_viewport_viewport(spatial_editor_viewport):
+	var children = recursive_get_children(spatial_editor_viewport)
 	for child in children:
 		if child.get_class() == "Viewport":
 			return child
+
+static func get_spatial_editor_viewport_control(spatial_editor_viewport):
+	var children = recursive_get_children(spatial_editor_viewport)
+	for child in children:
+		if child.get_class() == "Control":
+			return child
+
+static func get_focused_spatial_editor_viewport(spatial_editor_viewports):
+	for viewport in spatial_editor_viewports:
+		var viewport_control = get_spatial_editor_viewport_control(viewport)
+		if viewport_control.get_rect().has_point(viewport_control.get_local_mouse_position()):
+			return viewport
 
 static func get_snap_dialog(spatial_editor):
 	var children = recursive_get_children(spatial_editor)
