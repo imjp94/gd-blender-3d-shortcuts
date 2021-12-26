@@ -344,7 +344,8 @@ func mouse_transform(event):
 		var normal = (Vector3.ONE - constraint_axis).normalized()
 		if is_single_node and not is_global:
 			normal = node1.global_transform.basis.xform(normal)
-		plane = Plane(normal, (normal * plane_transform.origin).length())
+		var plane_dist = normal * plane_transform.origin
+		plane = Plane(normal, plane_dist.x + plane_dist.y + plane_dist.z)
 	var world_pos = Utils.project_on_plane(_camera, event.position, plane)
 	if not is_global and is_single_node and axis_count < 3:
 		var normalized_node1_basis = node1.global_transform.basis.scaled(Vector3.ONE / node1.global_transform.basis.get_scale())
