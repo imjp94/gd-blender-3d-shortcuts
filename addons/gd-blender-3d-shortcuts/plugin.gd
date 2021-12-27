@@ -44,6 +44,7 @@ var _applying_transform = Transform.IDENTITY
 var _last_world_pos = Vector3.ZERO
 var _init_angle = NAN
 var _last_angle = 0
+var _cummulative_angle_offset = 0
 var _last_center_offset = 0
 var _cummulative_center_offset = 0
 var _max_x = 0
@@ -353,7 +354,6 @@ func mouse_transform(event):
 	if not _last_world_pos:
 		_last_world_pos = world_pos
 	var offset = world_pos - _last_world_pos
-	offset *= constraint_axis
 	offset = offset.snapped(Vector3.ONE * 0.001)
 	if _is_warping_mouse:
 		offset = Vector3.ZERO
@@ -364,6 +364,7 @@ func mouse_transform(event):
 	var angle = event.position.angle_to_point(screen_origin) - _init_angle
 	var angle_offset = angle - _last_angle
 	angle_offset = stepify(angle_offset, 0.001)
+	_cummulative_angle_offset += angle_offset
 	# Scale offset
 	if _max_x == 0:
 		_max_x = event.position.x
@@ -380,14 +381,14 @@ func mouse_transform(event):
 		match current_session:
 			SESSION.TRANSLATE:
 				_editing_transform = _editing_transform.translated(offset)
-				_applying_transform.origin = _editing_transform.origin
+				_applying_transform.origin = _editing_transform.origin * constraint_axis
 				if is_snapping:
 					var snap = Vector3.ONE * (translate_snap if not precision_mode else translate_snap * precision_factor)
 					_applying_transform.origin = _applying_transform.origin.snapped(snap)
 			SESSION.ROTATE:
 				var rotation_axis = (-_camera.global_transform.basis.z * constraint_axis).normalized()
 				if not rotation_axis.is_equal_approx(Vector3.ZERO):
-					_editing_transform.basis = _editing_transform.basis.rotated(rotation_axis, angle_offset)
+					_editing_transform.basis = Basis.IDENTITY.rotated(rotation_axis, _cummulative_angle_offset)
 					var quat = _editing_transform.basis.get_rotation_quat()
 					if is_snapping:
 						var snap = Vector3.ONE * (rotate_snap if not precision_mode else rotate_snap * precision_factor)
@@ -396,11 +397,19 @@ func mouse_transform(event):
 			SESSION.SCALE:
 				if constraint_axis.x:
 					_editing_transform.basis.x = Vector3.RIGHT * (1 + _cummulative_center_offset)
+					_applying_transform.basis.x = _editing_transform.basis.x
+				else:
+					_applying_transform.basis.x = _applying_transform.basis.x.normalized()
 				if constraint_axis.y:
 					_editing_transform.basis.y = Vector3.UP * (1 + _cummulative_center_offset)
+					_applying_transform.basis.y = _editing_transform.basis.y
+				else:
+					_applying_transform.basis.y = _applying_transform.basis.y.normalized()
 				if constraint_axis.z:
 					_editing_transform.basis.z = Vector3.BACK * (1 + _cummulative_center_offset)
-				_applying_transform.basis = _editing_transform.basis
+					_applying_transform.basis.z = _editing_transform.basis.z
+				else:
+					_applying_transform.basis.z = _applying_transform.basis.z.normalized()
 				if is_snapping:
 					var snap = Vector3.ONE * (scale_snap if not precision_mode else scale_snap * precision_factor)
 					_applying_transform.basis.x = _applying_transform.basis.x.snapped(snap)
@@ -506,10 +515,10 @@ func commit_hide_nodes():
 	undo_redo.add_undo_method(Utils, "hide_nodes", nodes, false)
 	undo_redo.commit_action()
 
-func revert():
+func revert(revert_transform=true):
 	var nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
-	Utils.revert_transform(nodes, _cache_global_transforms)
-	_editing_transform = Transform.IDENTITY
+	if revert_transform:
+		Utils.revert_transform(nodes, _cache_global_transforms)
 	_applying_transform = Transform.IDENTITY
 	_last_world_pos = Vector3.ZERO
 	axis_ig.clear()
@@ -524,6 +533,7 @@ func clear_session():
 	_last_world_pos = Vector3.ZERO
 	_init_angle = NAN
 	_last_angle = 0
+	_cummulative_angle_offset = 0
 	_last_center_offset = 0
 	_cummulative_center_offset = 0
 	_max_x = 0
@@ -615,7 +625,7 @@ func get_constraint_axis_count():
 	return axis_count
 
 func set_constraint_axis(v):
-	revert()
+	revert(false)
 	if constraint_axis != v:
 		constraint_axis = v
 		draw_axises()
@@ -629,7 +639,7 @@ func set_is_global(v):
 	if is_global != v:
 		if is_instance_valid(local_space_button):
 			local_space_button.pressed = !v
-		revert()
+		revert(false)
 		is_global = v
 		draw_axises()
 		if _input_string:
@@ -655,5 +665,7 @@ func draw_axises():
 				var axis_origin = _camera.global_transform.origin + -_camera.global_transform.basis.z * 10.0 if is_pivot_point_behind_camera else pivot_point
 				Utils.draw_axis(axis_ig, axis_origin, axis, axis_length, color)
 			else:
+				var i = 0
 				for node in nodes:
-					Utils.draw_axis(axis_ig, node.global_transform.origin, node.global_transform.basis.xform(axis), axis_length, color)
+					Utils.draw_axis(axis_ig, node.global_transform.origin, _cache_global_transforms[i].basis.xform(axis), axis_length, color)
+					i += 1
