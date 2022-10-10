@@ -3,10 +3,10 @@ static func apply_transform(nodes, transform, cache_global_transforms):
 	for node in nodes:
 		var cache_global_transform = cache_global_transforms[i]
 		node.global_transform.origin = cache_global_transform.origin
-		node.global_transform.origin += cache_global_transform.basis.get_rotation_quat().xform(transform.origin)
-		node.global_transform.basis.x = cache_global_transform.basis.xform(transform.basis.x)
-		node.global_transform.basis.y = cache_global_transform.basis.xform(transform.basis.y)
-		node.global_transform.basis.z = cache_global_transform.basis.xform(transform.basis.z)
+		node.global_transform.origin += cache_global_transform.basis.get_rotation_quaternion() * transform.origin
+		node.global_transform.basis.x = cache_global_transform.basis * transform.basis.x
+		node.global_transform.basis.y = cache_global_transform.basis * transform.basis.y
+		node.global_transform.basis.z = cache_global_transform.basis * transform.basis.z
 		i += 1
 
 static func apply_global_transform(nodes, transform, cache_transforms):
@@ -32,7 +32,7 @@ static func reset_rotation(nodes):
 
 static func reset_scale(nodes):
 	for node in nodes:
-		var quat = node.transform.basis.get_rotation_quat()
+		var quat = node.transform.basis.get_rotation_quaternion()
 		node.transform.basis = Basis(quat)
 
 static func hide_nodes(nodes, is_hide=true):
@@ -51,27 +51,27 @@ static func recursive_get_children(node):
 static func get_spatial_editor(base_control):
 	var children = recursive_get_children(base_control)
 	for child in children:
-		if child.get_class() == "SpatialEditor":
+		if child.get_class() == "Node3DEditor":
 			return child
 
 static func get_spatial_editor_viewport_container(spatial_editor):
 	var children = recursive_get_children(spatial_editor)
 	for child in children:
-		if child.get_class() == "SpatialEditorViewportContainer":
+		if child.get_class() == "Node3DEditorViewportContainer":
 			return child
 
 static func get_spatial_editor_viewports(spatial_editor_viewport):
 	var children = recursive_get_children(spatial_editor_viewport)
 	var spatial_editor_viewports = []
 	for child in children:
-		if child.get_class() == "SpatialEditorViewport":
+		if child.get_class() == "Node3DEditorViewport":
 			spatial_editor_viewports.append(child)
 	return spatial_editor_viewports
 
 static func get_spatial_editor_viewport_viewport(spatial_editor_viewport):
 	var children = recursive_get_children(spatial_editor_viewport)
 	for child in children:
-		if child.get_class() == "Viewport":
+		if child.get_class() == "SubViewport":
 			return child
 
 static func get_spatial_editor_viewport_control(spatial_editor_viewport):
@@ -90,7 +90,7 @@ static func get_snap_dialog(spatial_editor):
 	var children = recursive_get_children(spatial_editor)
 	for child in children:
 		if child.get_class() == "ConfirmationDialog":
-			if child.window_title == "Snap Settings":
+			if child.title == "Snap Settings":
 				return child
 
 static func get_snap_dialog_line_edits(snap_dialog):
@@ -103,17 +103,17 @@ static func get_snap_dialog_line_edits(snap_dialog):
 static func get_spatial_editor_local_space_button(spatial_editor):
 	var children = recursive_get_children(spatial_editor)
 	for child in children:
-		if child.get_class() == "ToolButton":
+		if child.get_class() == "Button":
 			if child.shortcut:
-				if child.shortcut.get_as_text() == OS.get_scancode_string(KEY_T):# TODO: Check if user has custom shortcut
+				if child.shortcut.get_as_text() == OS.get_keycode_string(KEY_T):# TODO: Check if user has custom shortcut
 					return child
 
 static func get_spatial_editor_snap_button(spatial_editor):
 	var children = recursive_get_children(spatial_editor)
 	for child in children:
-		if child.get_class() == "ToolButton":
+		if child.get_class() == "Button":
 			if child.shortcut:
-				if child.shortcut.get_as_text() == OS.get_scancode_string(KEY_Y):# TODO: Check if user has custom shortcut
+				if child.shortcut.get_as_text() == OS.get_keycode_string(KEY_Y):# TODO: Check if user has custom shortcut
 					return child
 
 static func project_on_plane(camera, screen_point, plane):
@@ -136,31 +136,31 @@ static func infinite_rect(rect, from, to):
 	# Intersect with sides of rect
 	var intersection
 	# Top
-	intersection = Geometry.segment_intersects_segment_2d(rect.position, Vector2(rect.size.x, rect.position.y), from, to)
+	intersection = Geometry2D.segment_intersects_segment(rect.position, Vector2(rect.size.x, rect.position.y), from, to)
 	if intersection:
 		return intersection
 	# Left
-	intersection = Geometry.segment_intersects_segment_2d(rect.position, Vector2(rect.position.x, rect.size.y), from, to)
+	intersection = Geometry2D.segment_intersects_segment(rect.position, Vector2(rect.position.x, rect.size.y), from, to)
 	if intersection:
 		return intersection
 	# Right
-	intersection = Geometry.segment_intersects_segment_2d(rect.size, Vector2(rect.size.x, rect.position.y), from, to)
+	intersection = Geometry2D.segment_intersects_segment(rect.size, Vector2(rect.size.x, rect.position.y), from, to)
 	if intersection:
 		return intersection
 	# Bottom
-	intersection = Geometry.segment_intersects_segment_2d(rect.size, Vector2(rect.position.x, rect.size.y), from, to)
+	intersection = Geometry2D.segment_intersects_segment(rect.size, Vector2(rect.position.x, rect.size.y), from, to)
 	if intersection:
 		return intersection
 	return null
 
-static func draw_axis(ig, origin, axis, length, color):
+static func draw_axis(im, origin, axis, length, color):
 	var from = origin + (-axis * length / 2)
 	var to = origin + (axis * length / 2)
-	ig.begin(Mesh.PRIMITIVE_LINES)
-	ig.set_color(color)
-	ig.add_vertex(from)
-	ig.add_vertex(to)
-	ig.end()
+	im.surface_begin(Mesh.PRIMITIVE_LINES)
+	im.surface_set_color(color)
+	im.surface_add_vertex(from)
+	im.surface_add_vertex(to)
+	im.surface_end()
 
 static func draw_dashed_line(canvas_item, from, to, color, width, dash_length = 5, cap_end = false, antialiased = false):
 	# See https://github.com/juddrgledhill/godot-dashed-line/blob/master/line_harness.gd
