@@ -6,6 +6,8 @@ Blender's 3D transforming shortcuts in Godot
 ![Showcase](screenshots/gd_blender_shortcuts_showcase_2.gif)
 ![Showcase](screenshots/gd_blender_shortcuts_showcase_3.gif)
 
+> This version is only compatible with **Godot 4.x**, check out [godot3](https://github.com/imjp94/gd-blender-3d-shortcuts/tree/godot3) branch for older version
+
 ## Features
 
 - Transform with "G", "R", "S" keys and "H" key to hide
@@ -26,6 +28,14 @@ or
 2. Enable it from Project -> Settings -> Plugins
 
 3. (Optional) Clear spatial editor scale mode shortcut as it conflicts with rotate shortcut, Editor Settings > Shortcuts > Spatial Editor > Scale Mode
+
+or
+
+Install with [gd-plug](https://github.com/imjp94/gd-plug)
+
+```gdscript
+plug("imjp94/gd-blender-3d-shortcuts")
+```
 
 ## Shortcuts
 
