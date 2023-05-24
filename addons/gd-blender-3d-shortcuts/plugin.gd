@@ -393,7 +393,7 @@ func mouse_transform(event):
 					var quat = _editing_transform.basis.get_rotation_quaternion()
 					if is_snapping:
 						var snap = Vector3.ONE * (rotate_snap if not precision_mode else rotate_snap * precision_factor)
-						quat.set_euler(quat.get_euler().snapped(snap))
+						quat.from_euler(quat.get_euler().snapped(snap))
 					_applying_transform.basis = Basis(quat)
 			SESSION.SCALE:
 				if constraint_axis.x:
