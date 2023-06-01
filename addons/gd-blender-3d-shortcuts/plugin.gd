@@ -174,7 +174,10 @@ func _forward_3d_gui_input(camera, event):
 						KEY_H:
 							commit_hide_nodes()
 						KEY_X:
-							delete_selected_nodes()
+							if event.shift_pressed:
+								delete_selected_nodes()
+							else:
+								confirm_delete_selected_nodes()
 	else:
 		if event is InputEventKey:
 			# Not sure why event.pressed always return false for numpad keys
@@ -510,7 +513,36 @@ func commit_hide_nodes():
 	undo_redo.add_undo_method(Utils, "hide_nodes", nodes, false)
 	undo_redo.commit_action()
 
+## Opens a popup dialog to confirm deletion of selected nodes.
+func confirm_delete_selected_nodes():
+	var selected_nodes = get_editor_interface().get_selection().get_selected_nodes()
+	if selected_nodes.is_empty():
+		return
 
+	var editor_theme = get_editor_interface().get_base_control().theme
+	var popup = ConfirmationDialog.new()
+	popup.theme = editor_theme
+
+	# Setting dialog text dynamically depending on the selection to mimick Godot's normal behavior.
+	popup.dialog_text = "Delete "
+	var selection_size = selected_nodes.size()
+	if selection_size == 1:
+		popup.dialog_text += selected_nodes[0].get_name()
+	elif selection_size > 1:
+		popup.dialog_text += str(selection_size) + " nodes"
+	for node in selected_nodes:
+		if node.get_child_count() > 0:
+			popup.dialog_text += " and children"
+			break
+	popup.dialog_text += "?"
+
+	add_child(popup)
+	popup.popup_centered()
+	popup.canceled.connect(popup.queue_free)
+	popup.confirmed.connect(delete_selected_nodes)
+	popup.confirmed.connect(popup.queue_free)
+
+## Instantly deletes selected nodes and creates an undo history entry.
 func delete_selected_nodes():
 	var undo_redo = get_undo_redo()
 	
