@@ -267,8 +267,14 @@ func _forward_3d_gui_input(camera, event):
 				if event.pressed:
 					match event.keycode:
 						KEY_G:
-							start_session(SESSION.TRANSLATE, camera, event)
+							if event.ctrl_pressed and not event.shift_pressed:
+								group_selected_nodes()
+							elif event.ctrl_pressed and event.shift_pressed:
+								ungroup_selected_nodes()
+							else:
+								start_session(SESSION.TRANSLATE, camera, event)
 							forward = true
+
 						KEY_R:
 							start_session(SESSION.ROTATE, camera, event)
 							forward = true
@@ -826,3 +832,65 @@ func draw_axises():
 			else:
 				for node in nodes:
 					Utils.draw_axis(axis_im, node.global_transform.origin, node.global_transform.basis * axis, axis_length, color)
+
+## Groups selected Node3D derived nodes under a new Node3D.
+func group_selected_nodes():
+	var selected_nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
+	if selected_nodes.is_empty():
+		return
+
+	# Find the highest parent node of selected nodes, stopping at the edited scene root.
+	var parent_node = null
+	var last_level = 100_000
+	var edited_scene_root = get_tree().get_edited_scene_root()
+
+	for node in selected_nodes:
+		var parent = node.get_parent()
+		var level = parent.get_path().get_name_count()
+		if level < last_level:
+			last_level = level
+			parent_node = node.get_parent()
+			if parent_node == edited_scene_root:
+				break
+
+	# Find average global position of selected nodes
+	var average_global_position = Vector3.ZERO
+	for node in selected_nodes:
+		average_global_position += node.global_transform.origin
+	average_global_position /= selected_nodes.size()
+
+	# Create group node and reparent selected nodes to it.
+	var undo_redo = get_undo_redo()
+	undo_redo.create_action("Group Transformed Nodes", UndoRedo.MERGE_DISABLE)
+	var group_node = Node3D.new()
+	undo_redo.add_do_method(group_node, "set_name", "Group")
+	undo_redo.add_undo_method(group_node, "set_name", group_node.name)
+	undo_redo.add_do_method(parent_node, "add_child", group_node)
+	undo_redo.add_undo_method(parent_node, "remove_child", group_node)
+	undo_redo.add_undo_reference(group_node)
+	undo_redo.add_do_method(group_node, "set_global_position", average_global_position)
+	undo_redo.add_undo_method(group_node, "set_global_position", group_node.global_position)
+	# We use this node group to find group nodes when ungrouping.
+	undo_redo.add_do_method(group_node, "add_to_group", "editor_group", true)
+	undo_redo.add_undo_method(group_node, "remove_from_group", "editor_group")
+	undo_redo.add_do_method(group_node, "set_owner", edited_scene_root)
+	for node in selected_nodes:
+		undo_redo.add_do_method(node, "reparent", group_node)
+		undo_redo.add_undo_method(node, "reparent", node.get_parent())
+		undo_redo.add_undo_method(node, "set_global_position", node.global_position)
+		undo_redo.add_do_method(node, "set_owner", edited_scene_root)
+		undo_redo.add_undo_method(node, "set_owner", node.owner)
+		for child in Utils.recursive_get_children(node):
+			undo_redo.add_undo_method(child, "set_owner", node.owner)
+			undo_redo.add_do_method(child, "set_owner", edited_scene_root)
+
+	undo_redo.add_do_method(group_node, "set_meta", "_edit_group_", true)
+	undo_redo.add_undo_method(group_node, "remove_meta", "_edit_group_")
+	var spatial_editor = Utils.get_spatial_editor(get_editor_interface().get_base_control())
+	undo_redo.add_do_method(spatial_editor, "emit_signal", "item_group_status_changed")
+	undo_redo.add_undo_method(spatial_editor, "emit_signal", "item_group_status_changed")
+	undo_redo.add_undo_reference(group_node)
+	undo_redo.commit_action()
+
+func ungroup_selected_nodes():
+	pass
