@@ -844,6 +844,7 @@ func group_selected_nodes():
 	var parent_node = null
 	var last_level = 100_000
 	var edited_scene_root = get_tree().get_edited_scene_root()
+	var group_node_index = 0
 
 	for node in selected_nodes:
 		var parent = node.get_parent()
@@ -851,6 +852,7 @@ func group_selected_nodes():
 		if level < last_level:
 			last_level = level
 			parent_node = node.get_parent()
+			group_node_index = node.get_index()
 			if parent_node == edited_scene_root:
 				break
 
@@ -866,7 +868,7 @@ func group_selected_nodes():
 	var group_node = Node3D.new()
 	undo_redo.add_do_method(group_node, "set_name", "Group")
 	undo_redo.add_undo_method(group_node, "set_name", group_node.name)
-	undo_redo.add_do_method(parent_node, "add_child", group_node)
+	undo_redo.add_do_method(parent_node, "add_child", group_node, true)
 	undo_redo.add_undo_method(parent_node, "remove_child", group_node)
 	undo_redo.add_undo_reference(group_node)
 	undo_redo.add_do_method(group_node, "set_global_position", average_global_position)
@@ -878,6 +880,7 @@ func group_selected_nodes():
 	for node in selected_nodes:
 		undo_redo.add_do_method(node, "reparent", group_node)
 		undo_redo.add_undo_method(node, "reparent", node.get_parent())
+		undo_redo.add_undo_method(node.get_parent(), "move_child", node, node.get_index())
 		undo_redo.add_undo_method(node, "set_global_position", node.global_position)
 		undo_redo.add_do_method(node, "set_owner", edited_scene_root)
 		undo_redo.add_undo_method(node, "set_owner", node.owner)
@@ -891,6 +894,9 @@ func group_selected_nodes():
 	undo_redo.add_do_method(spatial_editor, "emit_signal", "item_group_status_changed")
 	undo_redo.add_undo_method(spatial_editor, "emit_signal", "item_group_status_changed")
 	undo_redo.add_undo_reference(group_node)
+	undo_redo.add_do_method(parent_node, "move_child", group_node, group_node_index)
+	undo_redo.add_do_method(get_editor_interface().get_selection(), "add_node", group_node)
+	undo_redo.add_undo_method(get_editor_interface().get_selection(), "remove_node", group_node)
 	undo_redo.commit_action()
 
 ## For each selected group node, moves its children to its parent and deletes the group node.
