@@ -870,11 +870,11 @@ func group_selected_nodes():
 	undo_redo.add_undo_method(parent_node, "remove_child", group_node)
 	undo_redo.add_undo_reference(group_node)
 	undo_redo.add_do_method(group_node, "set_global_position", average_global_position)
-	undo_redo.add_undo_method(group_node, "set_global_position", group_node.global_position)
 	# We use this node group to find group nodes when ungrouping.
 	undo_redo.add_do_method(group_node, "add_to_group", "editor_group", true)
 	undo_redo.add_undo_method(group_node, "remove_from_group", "editor_group")
 	undo_redo.add_do_method(group_node, "set_owner", edited_scene_root)
+
 	for node in selected_nodes:
 		undo_redo.add_do_method(node, "reparent", group_node)
 		undo_redo.add_undo_method(node, "reparent", node.get_parent())
@@ -893,5 +893,27 @@ func group_selected_nodes():
 	undo_redo.add_undo_reference(group_node)
 	undo_redo.commit_action()
 
+## For each selected group node, moves its children to its parent and deletes the group node.
 func ungroup_selected_nodes():
-	pass
+	var selected_nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
+	if selected_nodes.is_empty():
+		return
+
+	var undo_redo = get_undo_redo()
+	var edited_scene_root = get_tree().get_edited_scene_root()
+
+	undo_redo.create_action("Ungroup Group Node", UndoRedo.MERGE_DISABLE)
+	for node in selected_nodes:
+		# If node is a group node, reparent its children to its parent and delete it.
+		if node.is_in_group("editor_group"):
+			var parent = node.get_parent()
+			for child in node.get_children():
+				undo_redo.add_do_method(child, "reparent", parent)
+				undo_redo.add_undo_method(child, "reparent", node)
+				undo_redo.add_do_method(child, "set_owner", edited_scene_root)
+				undo_redo.add_undo_method(child, "set_owner", child.owner)
+				for grandchild in Utils.recursive_get_children(child):
+					undo_redo.add_undo_method(grandchild, "set_owner", child.owner)
+					undo_redo.add_do_method(grandchild, "set_owner", edited_scene_root)
+			undo_redo.add_do_method(parent, "remove_child", node)
+	undo_redo.commit_action()
