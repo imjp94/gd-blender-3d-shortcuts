@@ -154,6 +154,13 @@ func _input(event):
 										show_debug_draw_pie_menu()
 										get_viewport().set_input_as_handled()
 
+				KEY_G:
+					if event.ctrl_pressed and not event.shift_pressed:
+						group_selected_nodes()
+						get_viewport().set_input_as_handled()
+					elif event.ctrl_pressed and event.shift_pressed:
+						ungroup_selected_nodes()
+						get_viewport().set_input_as_handled()
 			# Hacky way to intercept default shortcut behavior when in session
 			if current_session != SESSION.NONE:
 				var event_text = event.as_text()
@@ -267,14 +274,7 @@ func _forward_3d_gui_input(camera, event):
 				if event.pressed:
 					match event.keycode:
 						KEY_G:
-							if event.ctrl_pressed and not event.shift_pressed:
-								group_selected_nodes()
-								get_viewport().set_input_as_handled()
-							elif event.ctrl_pressed and event.shift_pressed:
-								ungroup_selected_nodes()
-								get_viewport().set_input_as_handled()
-							else:
-								start_session(SESSION.TRANSLATE, camera, event)
+							start_session(SESSION.TRANSLATE, camera, event)
 							forward = true
 						KEY_R:
 							start_session(SESSION.ROTATE, camera, event)
