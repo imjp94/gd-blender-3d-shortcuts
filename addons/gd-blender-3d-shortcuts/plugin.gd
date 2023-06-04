@@ -913,13 +913,19 @@ func ungroup_selected_nodes():
 		# If node is a group node, reparent its children to its parent and delete it.
 		if node.is_in_group("editor_group"):
 			var parent = node.get_parent()
+			undo_redo.add_undo_method(parent, "add_child", node)
 			for child in node.get_children():
-				undo_redo.add_do_method(child, "reparent", parent)
-				undo_redo.add_undo_method(child, "reparent", node)
+				undo_redo.add_do_method(node, "remove_child", child)
+				undo_redo.add_do_method(parent, "add_child", child)
 				undo_redo.add_do_method(child, "set_owner", edited_scene_root)
+				undo_redo.add_do_method(child, "set_global_position", child.global_position)
+				undo_redo.add_undo_method(parent, "remove_child", child)
+				undo_redo.add_undo_method(node, "add_child", child)
 				undo_redo.add_undo_method(child, "set_owner", child.owner)
+				undo_redo.add_undo_method(child, "set_global_position", child.global_position)
 				for grandchild in Utils.recursive_get_children(child):
-					undo_redo.add_undo_method(grandchild, "set_owner", child.owner)
 					undo_redo.add_do_method(grandchild, "set_owner", edited_scene_root)
+					undo_redo.add_undo_method(grandchild, "set_owner", child.owner)
 			undo_redo.add_do_method(parent, "remove_child", node)
+			undo_redo.add_undo_reference(node)
 	undo_redo.commit_action()
