@@ -863,40 +863,40 @@ func group_selected_nodes():
 	average_global_position /= selected_nodes.size()
 
 	# Create group node and reparent selected nodes to it.
+	var group_node = Node3D.new()
 	var undo_redo = get_undo_redo()
 	undo_redo.create_action("Group Transformed Nodes", UndoRedo.MERGE_DISABLE)
-	var group_node = Node3D.new()
+
 	undo_redo.add_do_method(group_node, "set_name", "Group")
-	undo_redo.add_undo_method(group_node, "set_name", group_node.name)
 	undo_redo.add_do_method(parent_node, "add_child", group_node, true)
-	undo_redo.add_undo_method(parent_node, "remove_child", group_node)
-	undo_redo.add_undo_reference(group_node)
 	undo_redo.add_do_method(group_node, "set_global_position", average_global_position)
 	# We use this node group to find group nodes when ungrouping.
 	undo_redo.add_do_method(group_node, "add_to_group", "editor_group", true)
-	undo_redo.add_undo_method(group_node, "remove_from_group", "editor_group")
 	undo_redo.add_do_method(group_node, "set_owner", edited_scene_root)
+	undo_redo.add_undo_method(group_node, "remove_from_group", "editor_group")
+	undo_redo.add_undo_method(parent_node, "remove_child", group_node)
+	undo_redo.add_undo_reference(group_node)
 
 	for node in selected_nodes:
 		undo_redo.add_do_method(node, "reparent", group_node)
+		undo_redo.add_do_method(node, "set_owner", edited_scene_root)
 		undo_redo.add_undo_method(node, "reparent", node.get_parent())
 		undo_redo.add_undo_method(node.get_parent(), "move_child", node, node.get_index())
 		undo_redo.add_undo_method(node, "set_global_position", node.global_position)
-		undo_redo.add_do_method(node, "set_owner", edited_scene_root)
 		undo_redo.add_undo_method(node, "set_owner", node.owner)
 		for child in Utils.recursive_get_children(node):
 			undo_redo.add_undo_method(child, "set_owner", node.owner)
 			undo_redo.add_do_method(child, "set_owner", edited_scene_root)
 
-	undo_redo.add_do_method(group_node, "set_meta", "_edit_group_", true)
-	undo_redo.add_undo_method(group_node, "remove_meta", "_edit_group_")
 	var spatial_editor = Utils.get_spatial_editor(get_editor_interface().get_base_control())
-	undo_redo.add_do_method(spatial_editor, "emit_signal", "item_group_status_changed")
-	undo_redo.add_undo_method(spatial_editor, "emit_signal", "item_group_status_changed")
-	undo_redo.add_undo_reference(group_node)
+	undo_redo.add_do_method(group_node, "set_meta", "_edit_group_", true)
 	undo_redo.add_do_method(parent_node, "move_child", group_node, group_node_index)
+	undo_redo.add_do_method(spatial_editor, "emit_signal", "item_group_status_changed")
 	undo_redo.add_do_method(get_editor_interface().get_selection(), "add_node", group_node)
+	undo_redo.add_undo_method(group_node, "remove_meta", "_edit_group_")
+	undo_redo.add_undo_method(spatial_editor, "emit_signal", "item_group_status_changed")
 	undo_redo.add_undo_method(get_editor_interface().get_selection(), "remove_node", group_node)
+	undo_redo.add_undo_reference(group_node)
 	undo_redo.commit_action()
 
 ## For each selected group node, moves its children to its parent and deletes the group node.
