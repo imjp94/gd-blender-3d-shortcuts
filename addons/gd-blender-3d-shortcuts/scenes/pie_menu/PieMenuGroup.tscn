@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://addons/gd-blender-3d-shortcuts/scenes/pie_menu/PieMenuGroup.gd" type="Script" id=1]
+
+[node name="PieMenuGroup" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource( 1 )
