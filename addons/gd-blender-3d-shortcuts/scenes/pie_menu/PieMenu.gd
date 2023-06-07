@@ -3,6 +3,7 @@ extends Control
 
 signal item_selected(index)
 signal item_focused(index)
+signal item_cancelled()
 
 const button_margin = 6
 
@@ -28,26 +29,32 @@ func _ready():
 func _input(event):
 	if visible:
 		if event is InputEventKey:
-			match event.scancode:
-				KEY_ESCAPE:
-					hide()
-					get_viewport().set_input_as_handled()
+			if event.pressed:
+				match event.scancode:
+					KEY_ESCAPE:
+						cancel()
 		if event is InputEventMouseMotion:
 			focus_item()
-			get_viewport().set_input_as_handled()
+			get_tree().set_input_as_handled()
 		if event is InputEventMouseButton:
 			if event.pressed:
 				match event.button_index:
 					BUTTON_LEFT:
 						select_item(focused_index)
+						get_tree().set_input_as_handled()
 					BUTTON_RIGHT:
-						hide()
-						get_viewport().set_input_as_handled()
+						cancel()
+						get_tree().set_input_as_handled()
 
 func _on_visiblity_changed():
 	if not visible:
 		if selected_index != focused_index: # Cancellation
-			select_item(selected_index)
+			focused_index = selected_index
+
+func cancel():
+	hide()
+	get_tree().set_input_as_handled()
+	emit_signal("item_cancelled")
 
 func select_item(index):
 	set_button_style(selected_index, "normal", "normal")

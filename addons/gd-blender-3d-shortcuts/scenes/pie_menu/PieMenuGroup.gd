@@ -4,6 +4,7 @@ const PieMenuScn = preload("PieMenu.tscn")
 
 signal item_focused(menu, index)
 signal item_selected(menu, index)
+signal item_cancelled(menu)
 
 const item4 = [
 	["Normal", 0], ["Unshaded", 1], ["Lighting", 2], ["Overdraw", 3], ["Wireframe", 4],
@@ -67,12 +68,16 @@ var theme_source_node = self setget set_theme_source_node
 func _ready():
 	hide()
 	# # TODO: REMOVE!!!
-	# populate_menu(item4, PieMenuScn.instance())
+	populate_menu(item4, PieMenuScn.instance())
 
-# # TODO: REMOVE!!!
-# func _unhandled_key_input(event):
-# 	if event.is_action_pressed("ui_accept"):
-# 		popup(get_global_mouse_position())
+# TODO: REMOVE!!!
+func _unhandled_key_input(event):
+	if event.is_action_pressed("ui_accept"):
+		popup(get_global_mouse_position())
+
+func _on_item_cancelled(pie_menu):
+	back()
+	emit_signal("item_cancelled", pie_menu)
 
 func _on_item_focused(index, pie_menu):
 	var current_menu = get_current_menu()
@@ -80,11 +85,7 @@ func _on_item_focused(index, pie_menu):
 		emit_signal("item_focused", current_menu, index)
 
 func _on_item_selected(index):
-	if index == -1:
-		# Cancel
-		page_index = [0]
-		return
-	
+	var last_menu = get_current_menu()
 	page_index.append(index)
 	var current_menu = get_current_menu()
 	if current_menu:
@@ -95,7 +96,7 @@ func _on_item_selected(index):
 		# Final selection, revert page index
 		if page_index.size() > 1:
 			page_index.pop_back()
-		var last_menu = get_current_menu()
+		last_menu = get_current_menu()
 		page_index = [0]
 		hide()
 		emit_signal("item_selected", last_menu, index)
@@ -111,7 +112,8 @@ func populate_menu(items, pie_menu):
 	if not root:
 		root = pie_menu
 		root.connect("item_focused", self, "_on_item_focused", [pie_menu])
-		root.connect("item_selected",self,  "_on_item_selected")
+		root.connect("item_selected", self,  "_on_item_selected")
+		root.connect("item_cancelled", self, "_on_item_cancelled", [pie_menu])
 
 	pie_menu.items = items
 
@@ -124,6 +126,7 @@ func populate_menu(items, pie_menu):
 			var new_pie_menu = PieMenuScn.instance()
 			new_pie_menu.connect("item_focused", self, "_on_item_focused", [new_pie_menu])
 			new_pie_menu.connect("item_selected", self, "_on_item_selected")
+			new_pie_menu.connect("item_cancelled", self, "_on_item_cancelled", [new_pie_menu])
 			populate_menu(value, new_pie_menu)
 			pie_menu.pie_menus.append(new_pie_menu)
 		else:
@@ -133,6 +136,19 @@ func populate_menu(items, pie_menu):
 func clear_menu():
 	if root:
 		root.queue_free()
+
+func back():
+	var last_menu = get_current_menu()
+	last_menu.hide()
+	page_index.pop_back()
+	if page_index.size() == 0:
+		page_index = [0]
+		hide()
+		return
+	else:
+		var current_menu = get_current_menu()
+		if current_menu:
+			current_menu.popup(rect_global_position)
 
 func get_menu(indexes=[0]):
 	var pie_menu = root
