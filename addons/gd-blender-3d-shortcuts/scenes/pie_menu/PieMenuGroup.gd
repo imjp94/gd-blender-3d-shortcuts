@@ -6,60 +6,6 @@ signal item_focused(menu, index)
 signal item_selected(menu, index)
 signal item_cancelled(menu)
 
-const item4 = [
-	["Normal", 0], ["Unshaded", 1], ["Lighting", 2], ["Overdraw", 3], ["Wireframe", 4],
-	[
-		"Others",
-		[
-			["Shadows", 
-				[
-					["Shadow Atlas", 9], ["Directional Shadow Atlas", 10]
-				]
-			],
-			["SDFGI", 
-				[
-					["SDFGI", 16], ["SDFGI Probes", 17], ["GI Buffer", 18]
-				]
-			],
-			["Environment", 
-				[
-					["SSAO", 12], ["SSIL", 13]
-				]
-			],
-			["Misc", 
-				[
-					["Scene Luminance", 11], ["Disable LOD", 19], ["Cluster Reflection Probes", 23]
-				]
-			],
-		]
-	],
-	[
-		"Others2",
-		[
-			["Shadows", 
-				[
-					["Shadow Atlas", 9], ["Directional Shadow Atlas", 10]
-				]
-			],
-			["SDFGI", 
-				[
-					["SDFGI", 16], ["SDFGI Probes", 17], ["GI Buffer", 18]
-				]
-			],
-			["Environment", 
-				[
-					["SSAO", 12], ["SSIL", 13]
-				]
-			],
-			["Misc", 
-				[
-					["Scene Luminance", 11], ["Disable LOD", 19], ["Cluster Reflection Probes", 23]
-				]
-			],
-		]
-	]
-]
-
 var root
 var page_index = [0]
 var theme_source_node = self setget set_theme_source_node
@@ -67,13 +13,6 @@ var theme_source_node = self setget set_theme_source_node
 
 func _ready():
 	hide()
-	# # TODO: REMOVE!!!
-	populate_menu(item4, PieMenuScn.instance())
-
-# TODO: REMOVE!!!
-func _unhandled_key_input(event):
-	if event.is_action_pressed("ui_accept"):
-		popup(get_global_mouse_position())
 
 func _on_item_cancelled(pie_menu):
 	back()
