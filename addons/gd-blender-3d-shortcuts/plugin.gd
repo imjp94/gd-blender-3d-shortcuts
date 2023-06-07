@@ -3,10 +3,53 @@ extends EditorPlugin
 
 const Utils = preload("Utils.gd")
 const PieMenuScn = preload("scenes/pie_menu/PieMenu.tscn")
+const PieMenuGroupScn = preload("scenes/pie_menu/PieMenuGroup.tscn")
 
 const DEFAULT_LINE_COLOR = Color.WHITE
 
-const items = ["Normal", "Unshaded", "Overdraw", "Wireframe"]
+const items = [
+	["Normal", 0], ["Unshaded", 1], ["Lighting", 2], ["Overdraw", 3], ["Wireframe", 4],
+	[
+		"Advance",
+		[
+			["Shadows", 
+				[
+					["Shadow Atlas", 9], ["Directional Shadow Atlas", 10], ["Directional Shadow Splits", 14]
+				]
+			],
+			["Lights", 
+				[
+					["Omni Lights Cluster", 20], ["Spot Lights Cluster", 21]
+				]
+			],
+			["VoxelGI", 
+				[
+					["VoxelGI Albedo", 6], ["VoxelGI Lighting", 7], ["VoxelGI Emiision", 8]
+				]
+			],
+			["SDFGI", 
+				[
+					["SDFGI", 16], ["SDFGI Probes", 17], ["GI Buffer", 18]
+				]
+			],
+			["Environment", 
+				[
+					["SSAO", 12], ["SSIL", 13]
+				]
+			],
+			["Decals", 
+				[
+					["Decal Atlas", 15], ["Decal Cluster", 22]
+				]
+			],
+			["Misc", 
+				[
+					["Normal Buffer", 5], ["Scene Luminance", 11], ["Disable LOD", 19], ["Cluster Reflection Probes", 23], ["Occluders", 24], ["Motion Vectors", 25]
+				]
+			],
+		]
+	],
+]
 
 enum SESSION {
 	TRANSLATE,
@@ -81,9 +124,9 @@ func _ready():
 	local_space_button.connect("toggled", _on_local_space_button_toggled)
 	snap_button = Utils.get_spatial_editor_snap_button(spatial_editor)
 	snap_button.connect("toggled", _on_snap_button_toggled)
-	pie_menu = PieMenuScn.instantiate()
+	pie_menu = PieMenuGroupScn.instantiate()
+	pie_menu.populate_menu(items, PieMenuScn.instantiate())
 	pie_menu.theme_source_node = spatial_editor
-	pie_menu.items = items
 	pie_menu.connect("item_focused", _on_PieMenu_item_focused)
 	pie_menu.connect("item_selected", _on_PieMenu_item_selected)
 	var spatial_editor_viewport_container = Utils.get_spatial_editor_viewport_container(spatial_editor)
@@ -98,8 +141,11 @@ func _input(event):
 				KEY_Z:
 					if pie_menu.visible:
 						pie_menu.hide()
-					elif not (event.ctrl_pressed or event.alt_pressed or event.shift_pressed) and current_session == SESSION.NONE:
+						get_viewport().set_input_as_handled()
+					else:
+						if not (event.ctrl_pressed or event.alt_pressed or event.shift_pressed) and current_session == SESSION.NONE:
 							show_pie_menu()
+							get_viewport().set_input_as_handled()
 			# Hacky way to intercept default shortcut behavior when in session
 			if current_session != SESSION.NONE:
 				var event_text = event.as_text()
@@ -134,11 +180,15 @@ func _on_snap_value_changed(text, session):
 		SESSION.SCALE:
 			scale_snap = text.to_float() / 100.0
 
-func _on_PieMenu_item_focused(index):
-	switch_display_mode(index)
+func _on_PieMenu_item_focused(menu, index):
+	var value = menu.buttons[index].get_meta("value", 0)
+	if not (value is Array):
+		switch_display_mode(value)
 
-func _on_PieMenu_item_selected(index):
-	switch_display_mode(index)
+func _on_PieMenu_item_selected(menu, index):
+	var value = menu.buttons[index].get_meta("value", 0)
+	if not (value is Array):
+		switch_display_mode(value)
 
 func show_pie_menu():
 	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
@@ -148,10 +198,8 @@ func show_pie_menu():
 	if pie_menu.get_parent() != canvas_layer:
 		canvas_layer.add_child(pie_menu)
 		var viewport = Utils.get_spatial_editor_viewport_viewport(spatial_editor_viewport)
-		pie_menu.select_item(viewport.debug_draw)
 
 	pie_menu.popup(overlay_control.get_global_mouse_position())
-			
 
 func _on_local_space_button_toggled(pressed):
 	is_global = !pressed

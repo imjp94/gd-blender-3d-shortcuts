@@ -14,7 +14,7 @@ var buttons = []
 var pie_menus = []
 
 var focused_index = -1
-var theme_source_node = self
+var theme_source_node = self : set = set_theme_source_node
 var grow_with_max_button_width = false
 
 
@@ -31,15 +31,19 @@ func _input(event):
 			match event.keycode:
 				KEY_ESCAPE:
 					hide()
+					get_viewport().set_input_as_handled()
 		if event is InputEventMouseMotion:
 			focus_item()
+			get_viewport().set_input_as_handled()
 		if event is InputEventMouseButton:
 			if event.pressed:
 				match event.button_index:
 					MOUSE_BUTTON_LEFT:
 						select_item(focused_index)
+						get_viewport().set_input_as_handled()
 					MOUSE_BUTTON_RIGHT:
 						hide()
+						get_viewport().set_input_as_handled()
 
 func _on_visiblity_changed():
 	if not visible:
@@ -91,10 +95,8 @@ func populate_menu():
 		var button = Button.new()
 		button.grow_horizontal = Control.GROW_DIRECTION_BOTH
 		button.text = name
-		if value:
+		if value != null:
 			button.set_meta("value", value)
-		# button.margin_right += button_margin
-		# button.margin_bottom += button_margin
 		buttons.append(button)
 		set_button_style(i, "hover", "hover")
 		set_button_style(i, "pressed", "pressed")
@@ -143,3 +145,9 @@ func set_selected_index(v):
 func set_radius(v):
 	radius = v
 	align()
+
+func set_theme_source_node(v):
+	theme_source_node = v
+	for pie_menu in pie_menus:
+		if pie_menu:
+			pie_menu.theme_source_node = theme_source_node
