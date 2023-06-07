@@ -136,7 +136,7 @@ func _ready():
 
 func _input(event):
 	if event is InputEventKey:
-		if event.pressed:
+		if event.pressed and not event.echo:
 			match event.keycode:
 				KEY_Z:
 					if debug_draw_pie_menu.visible:
