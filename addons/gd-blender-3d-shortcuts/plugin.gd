@@ -6,8 +6,8 @@ const PieMenuScn = preload("scenes/pie_menu/PieMenu.tscn")
 const PieMenuGroupScn = preload("scenes/pie_menu/PieMenuGroup.tscn")
 
 const DEFAULT_LINE_COLOR = Color.WHITE
-
-const items = [
+# [name, value]
+const DEBUG_DRAW_OPTIONS = [
 	["Normal", 0], ["Unshaded", 1], ["Lighting", 2], ["Overdraw", 3], ["Wireframe", 4],
 	[
 		"Advance",
@@ -42,7 +42,7 @@ const items = [
 					["Decal Atlas", 15], ["Decal Cluster", 22]
 				]
 			],
-			["Misc", 
+			["Others", 
 				[
 					["Normal Buffer", 5], ["Scene Luminance", 11], ["Disable LOD", 19], ["Cluster Reflection Probes", 23], ["Occluders", 24], ["Motion Vectors", 25]
 				]
@@ -65,8 +65,8 @@ var local_space_button
 var snap_button
 var overlay_control
 var spatial_editor_viewports
-var pie_menu
-var canvas_layer = CanvasLayer.new()
+var debug_draw_pie_menu
+var overlay_control_canvas_layer = CanvasLayer.new()
 
 var overlay_label = Label.new()
 var axis_mesh_inst
@@ -124,11 +124,11 @@ func _ready():
 	local_space_button.connect("toggled", _on_local_space_button_toggled)
 	snap_button = Utils.get_spatial_editor_snap_button(spatial_editor)
 	snap_button.connect("toggled", _on_snap_button_toggled)
-	pie_menu = PieMenuGroupScn.instantiate()
-	pie_menu.populate_menu(items, PieMenuScn.instantiate())
-	pie_menu.theme_source_node = spatial_editor
-	pie_menu.connect("item_focused", _on_PieMenu_item_focused)
-	pie_menu.connect("item_selected", _on_PieMenu_item_selected)
+	debug_draw_pie_menu = PieMenuGroupScn.instantiate()
+	debug_draw_pie_menu.populate_menu(DEBUG_DRAW_OPTIONS, PieMenuScn.instantiate())
+	debug_draw_pie_menu.theme_source_node = spatial_editor
+	debug_draw_pie_menu.connect("item_focused", _on_PieMenu_item_focused)
+	debug_draw_pie_menu.connect("item_selected", _on_PieMenu_item_selected)
 	var spatial_editor_viewport_container = Utils.get_spatial_editor_viewport_container(spatial_editor)
 	if spatial_editor_viewport_container:
 		spatial_editor_viewports = Utils.get_spatial_editor_viewports(spatial_editor_viewport_container)
@@ -139,12 +139,12 @@ func _input(event):
 		if event.pressed:
 			match event.keycode:
 				KEY_Z:
-					if pie_menu.visible:
-						pie_menu.hide()
+					if debug_draw_pie_menu.visible:
+						debug_draw_pie_menu.hide()
 						get_viewport().set_input_as_handled()
 					else:
 						if not (event.ctrl_pressed or event.alt_pressed or event.shift_pressed) and current_session == SESSION.NONE:
-							show_pie_menu()
+							show_debug_draw_pie_menu()
 							get_viewport().set_input_as_handled()
 			# Hacky way to intercept default shortcut behavior when in session
 			if current_session != SESSION.NONE:
@@ -190,16 +190,16 @@ func _on_PieMenu_item_selected(menu, index):
 	if not (value is Array):
 		switch_display_mode(value)
 
-func show_pie_menu():
+func show_debug_draw_pie_menu():
 	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
 	overlay_control = Utils.get_spatial_editor_viewport_control(spatial_editor_viewport) if spatial_editor_viewport else null
-	if canvas_layer.get_parent() != overlay_control:
-		overlay_control.add_child(canvas_layer)
-	if pie_menu.get_parent() != canvas_layer:
-		canvas_layer.add_child(pie_menu)
+	if overlay_control_canvas_layer.get_parent() != overlay_control:
+		overlay_control.add_child(overlay_control_canvas_layer)
+	if debug_draw_pie_menu.get_parent() != overlay_control_canvas_layer:
+		overlay_control_canvas_layer.add_child(debug_draw_pie_menu)
 		var viewport = Utils.get_spatial_editor_viewport_viewport(spatial_editor_viewport)
 
-	pie_menu.popup(overlay_control.get_global_mouse_position())
+	debug_draw_pie_menu.popup(overlay_control.get_global_mouse_position())
 
 func _on_local_space_button_toggled(pressed):
 	is_global = !pressed
