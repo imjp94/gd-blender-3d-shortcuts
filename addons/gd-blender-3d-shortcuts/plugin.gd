@@ -24,7 +24,7 @@ const DEBUG_DRAW_OPTIONS = [
 			],
 			["VoxelGI", 
 				[
-					["VoxelGI Albedo", 6], ["VoxelGI Lighting", 7], ["VoxelGI Emiision", 8]
+					["VoxelGI Albedo", 6], ["VoxelGI Lighting", 7], ["VoxelGI Emission", 8]
 				]
 			],
 			["SDFGI", 
