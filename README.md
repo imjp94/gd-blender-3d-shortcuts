@@ -47,7 +47,9 @@ plug("imjp94/gd-blender-3d-shortcuts")
 - Revert Scale: ALT + S
 - Constraint to Single Axis: X or Y or Z
 - Constraint to Plane: SHIFT + (X or Y or Z)
+- Delete: X
 - Hide: H
 - Precision Mode(while transforming with mouse): SHIFT
 - Toggle Global/Local mode(non-persistent): XX or YY or ZZ
 - Switch Spatial Editor Viewport Display Mode: Z
+  - Cancel/Back: ESC or Mouse Right Click
