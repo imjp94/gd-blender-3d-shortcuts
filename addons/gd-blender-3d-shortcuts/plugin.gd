@@ -2,8 +2,10 @@ tool
 extends EditorPlugin
 
 const Utils = preload("Utils.gd")
+const PieMenuScn = preload("scenes/pie_menu/PieMenu.tscn")
 
 const DEFAULT_LINE_COLOR = Color.white
+const DEBUG_DRAW_OPTIONS = ["Normal", "Unshaded", "Overdraw", "Wireframe"]
 
 enum SESSION {
 	TRANSLATE,
@@ -19,7 +21,8 @@ var local_space_button
 var snap_button
 var overlay_control
 var spatial_editor_viewports
-
+var debug_draw_pie_menu
+var overlay_control_canvas_layer = CanvasLayer.new()
 
 var overlay_label = Label.new()
 var axis_ig
@@ -76,6 +79,11 @@ func _ready():
 	local_space_button.connect("toggled", self, "_on_local_space_button_toggled")
 	snap_button = Utils.get_spatial_editor_snap_button(spatial_editor)
 	snap_button.connect("toggled", self, "_on_snap_button_toggled")
+	debug_draw_pie_menu = PieMenuScn.instance()
+	debug_draw_pie_menu.theme_source_node = spatial_editor
+	debug_draw_pie_menu.items = DEBUG_DRAW_OPTIONS
+	debug_draw_pie_menu.connect("item_focused", self, "_on_PieMenu_item_focused")
+	debug_draw_pie_menu.connect("item_selected", self, "_on_PieMenu_item_selected")
 	var spatial_editor_viewport_container = Utils.get_spatial_editor_viewport_container(spatial_editor)
 	if spatial_editor_viewport_container:
 		spatial_editor_viewports = Utils.get_spatial_editor_viewports(spatial_editor_viewport_container)
@@ -83,11 +91,13 @@ func _ready():
 
 func _input(event):
 	if event is InputEventKey:
-		if event.pressed:
+		if event.pressed and not event.echo:
 			match event.scancode:
 				KEY_Z:
-					if not (event.control or event.alt or event.shift) and current_session == SESSION.NONE:
-						switch_display_mode()
+					if debug_draw_pie_menu.visible:
+						debug_draw_pie_menu.hide()
+					elif not (event.control or event.alt or event.shift) and current_session == SESSION.NONE:
+							show_debug_draw_pie_menu()
 			# Hacky way to intercept default shortcut behavior when in session
 			if current_session != SESSION.NONE:
 				var event_text = event.as_text()
@@ -121,6 +131,24 @@ func _on_snap_value_changed(text, session):
 			rotate_snap = deg2rad(float(text))
 		SESSION.SCALE:
 			scale_snap = float(text) / 100.0
+
+func _on_PieMenu_item_focused(index):
+	switch_display_mode(index)
+
+func _on_PieMenu_item_selected(index):
+	switch_display_mode(index)
+
+func show_debug_draw_pie_menu():
+	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
+	overlay_control = Utils.get_spatial_editor_viewport_control(spatial_editor_viewport) if spatial_editor_viewport else null
+	if overlay_control_canvas_layer.get_parent() != overlay_control:
+		overlay_control.add_child(overlay_control_canvas_layer)
+	if debug_draw_pie_menu.get_parent() != overlay_control_canvas_layer:
+		overlay_control_canvas_layer.add_child(debug_draw_pie_menu)
+		var viewport = Utils.get_spatial_editor_viewport_viewport(spatial_editor_viewport)
+		debug_draw_pie_menu.select_item(viewport.debug_draw)
+
+	debug_draw_pie_menu.popup(overlay_control.get_global_mouse_position())
 
 func _on_local_space_button_toggled(pressed):
 	is_global = !pressed
@@ -605,14 +633,11 @@ func sync_settings():
 	if snap_button:
 		is_snapping = snap_button.pressed
 
-func switch_display_mode():
+func switch_display_mode(debug_draw):
 	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
 	if spatial_editor_viewport:
 		var viewport = Utils.get_spatial_editor_viewport_viewport(spatial_editor_viewport)
-		if viewport.debug_draw == Viewport.DEBUG_DRAW_WIREFRAME:
-			viewport.debug_draw = 0
-		else:
-			viewport.debug_draw += 1
+		viewport.debug_draw = debug_draw
 
 # Repeatedly applying same axis will results in toggling is_global, just like pressing xx, yy or zz in blender
 func toggle_constraint_axis(axis):
