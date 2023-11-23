@@ -331,9 +331,14 @@ func _forward_3d_gui_input(camera, event):
 		
 		if event is InputEventMouseButton:
 			if event.pressed:
-				commit_session()
-				end_session()
-				forward = true
+				if event.button_index == 2:
+					revert()
+					end_session()
+					return true
+				else:
+					commit_session()
+					end_session()
+					forward = true
 
 		if event is InputEventMouseMotion:
 			match current_session:
