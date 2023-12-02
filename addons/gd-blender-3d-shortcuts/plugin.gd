@@ -101,6 +101,7 @@ var _cache_transforms = [] # Nodes' local transform relative to pivot_point
 var _input_string = ""
 var _is_global_on_session = false
 var _is_warping_mouse = false
+var _is_3D_screen = true
 
 
 func _init():
@@ -133,6 +134,10 @@ func _ready():
 	if spatial_editor_viewport_container:
 		spatial_editor_viewports = Utils.get_spatial_editor_viewports(spatial_editor_viewport_container)
 	sync_settings()
+	connect("main_screen_changed", _main_screen_changed)
+
+func _main_screen_changed(screen_name):
+	_is_3D_screen = screen_name == "3D"
 
 func _input(event):
 	if event is InputEventKey:
@@ -143,7 +148,7 @@ func _input(event):
 						debug_draw_pie_menu.hide()
 						get_viewport().set_input_as_handled()
 					else:
-						if not (event.ctrl_pressed or event.alt_pressed or event.shift_pressed) and current_session == SESSION.NONE:
+						if _is_3D_screen and not (event.ctrl_pressed or event.alt_pressed or event.shift_pressed) and current_session == SESSION.NONE:
 							show_debug_draw_pie_menu()
 							get_viewport().set_input_as_handled()
 			# Hacky way to intercept default shortcut behavior when in session
@@ -193,6 +198,8 @@ func _on_PieMenu_item_selected(menu, index):
 func show_debug_draw_pie_menu():
 	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
 	overlay_control = Utils.get_spatial_editor_viewport_control(spatial_editor_viewport) if spatial_editor_viewport else null
+	if not overlay_control:
+		return false
 	if overlay_control_canvas_layer.get_parent() != overlay_control:
 		overlay_control.add_child(overlay_control_canvas_layer)
 	if debug_draw_pie_menu.get_parent() != overlay_control_canvas_layer:
@@ -200,6 +207,7 @@ func show_debug_draw_pie_menu():
 		var viewport = Utils.get_spatial_editor_viewport_viewport(spatial_editor_viewport)
 
 	debug_draw_pie_menu.popup(overlay_control.get_global_mouse_position())
+	return true
 
 func _on_local_space_button_toggled(pressed):
 	is_global = !pressed
