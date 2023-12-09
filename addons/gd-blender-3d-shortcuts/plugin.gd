@@ -139,13 +139,20 @@ func _input(event):
 		if event.pressed and not event.echo:
 			match event.keycode:
 				KEY_Z:
-					if debug_draw_pie_menu.visible:
-						debug_draw_pie_menu.hide()
-						get_viewport().set_input_as_handled()
-					else:
-						if not (event.ctrl_pressed or event.alt_pressed or event.shift_pressed) and current_session == SESSION.NONE:
-							show_debug_draw_pie_menu()
-							get_viewport().set_input_as_handled()
+					var focus = find_focused_control(get_tree().root)
+
+					if focus != null:
+						if focus.get_parent_control() != null:
+							# This may be slightly fragile if this name changes or the control gets placed another level deeper internally
+							if "Node3DEditorViewport" in focus.get_parent_control().name:
+								if debug_draw_pie_menu.visible:
+									debug_draw_pie_menu.hide()
+									get_viewport().set_input_as_handled()
+								else:
+									if not (event.ctrl_pressed or event.alt_pressed or event.shift_pressed) and current_session == SESSION.NONE:
+										show_debug_draw_pie_menu()
+										get_viewport().set_input_as_handled()
+
 			# Hacky way to intercept default shortcut behavior when in session
 			if current_session != SESSION.NONE:
 				var event_text = event.as_text()
@@ -193,6 +200,8 @@ func _on_PieMenu_item_selected(menu, index):
 func show_debug_draw_pie_menu():
 	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
 	overlay_control = Utils.get_spatial_editor_viewport_control(spatial_editor_viewport) if spatial_editor_viewport else null
+	if not overlay_control:
+		return false
 	if overlay_control_canvas_layer.get_parent() != overlay_control:
 		overlay_control.add_child(overlay_control_canvas_layer)
 	if debug_draw_pie_menu.get_parent() != overlay_control_canvas_layer:
@@ -200,6 +209,7 @@ func show_debug_draw_pie_menu():
 		var viewport = Utils.get_spatial_editor_viewport_viewport(spatial_editor_viewport)
 
 	debug_draw_pie_menu.popup(overlay_control.get_global_mouse_position())
+	return true
 
 func _on_local_space_button_toggled(pressed):
 	is_global = !pressed
@@ -231,6 +241,18 @@ func _edit(object):
 			if axis_mesh_inst.get_parent() != scene_root:
 				axis_mesh_inst.get_parent().remove_child(axis_mesh_inst)
 				scene_root.get_parent().add_child(axis_mesh_inst)
+
+func find_focused_control(node):
+	if node is Control and node.has_focus():
+		return node
+
+	for child in node.get_children():
+		var result = find_focused_control(child)
+
+		if result:
+			return result
+
+	return null
 
 func _forward_3d_gui_input(camera, event):
 	var forward = false
