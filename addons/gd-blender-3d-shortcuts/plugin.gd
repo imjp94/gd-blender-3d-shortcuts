@@ -221,7 +221,7 @@ func _handles(object):
 	if object is Node3D:
 		_is_editing = get_editor_interface().get_selection().get_selected_nodes().size()
 		return _is_editing
-	else:
+	elif object.get_class() == "MultiNodeEdit": # Explicitly handle MultiNodeEdit, otherwise, it will active when selected Resource
 		_is_editing = get_editor_interface().get_selection().get_transformable_selected_nodes().size() > 0
 		return _is_editing
 	return false
