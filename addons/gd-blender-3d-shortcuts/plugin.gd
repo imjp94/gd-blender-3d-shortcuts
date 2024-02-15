@@ -256,7 +256,6 @@ func find_focused_control(node):
 	return null
 
 func _forward_3d_gui_input(camera, event):
-	
 	var forward = false
 	if current_session == SESSION.NONE:
 		# solve conflict with free look
