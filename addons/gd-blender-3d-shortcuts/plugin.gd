@@ -136,13 +136,12 @@ func _ready():
 	sync_settings()
 
 func _input(event):
-	
 	if event is InputEventKey:
 		if event.pressed and not event.echo:
 			match event.keycode:
 				KEY_Z:
 					var focus = find_focused_control(get_tree().root)
-					
+
 					if focus != null:
 						if focus.get_parent_control() != null:
 							# This may be slightly fragile if this name changes or the control gets placed another level deeper internally
