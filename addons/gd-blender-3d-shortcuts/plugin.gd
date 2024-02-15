@@ -101,6 +101,7 @@ var _cache_transforms = [] # Nodes' local transform relative to pivot_point
 var _input_string = ""
 var _is_global_on_session = false
 var _is_warping_mouse = false
+var _is_pressing_right_mouse_button = false
 
 
 func _init():
@@ -257,6 +258,10 @@ func find_focused_control(node):
 func _forward_3d_gui_input(camera, event):
 	var forward = false
 	if current_session == SESSION.NONE:
+		# solve conflict with free look
+		if event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_RIGHT:
+				_is_pressing_right_mouse_button = event.is_pressed()
 		if _is_editing:
 			if event is InputEventKey:
 				if event.pressed:
@@ -269,8 +274,10 @@ func _forward_3d_gui_input(camera, event):
 							forward = true
 						KEY_S:
 							if not event.ctrl_pressed:
-								start_session(SESSION.SCALE, camera, event)
-								forward = true
+								# solve conflict with free look
+								if not _is_pressing_right_mouse_button:
+									start_session(SESSION.SCALE, camera, event)
+									forward = true
 						KEY_H:
 							commit_hide_nodes()
 						KEY_X:
