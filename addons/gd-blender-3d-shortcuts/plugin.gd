@@ -572,9 +572,6 @@ func start_session(session, camera, event):
 		return
 
 	update_overlays()
-	var spatial_editor = Utils.get_spatial_editor(get_editor_interface().get_base_control())
-	var spatial_editor_viewport_container = Utils.get_spatial_editor_viewport_container(spatial_editor)
-	spatial_editor_viewports = Utils.get_spatial_editor_viewports(spatial_editor_viewport_container)
 	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
 	overlay_control = Utils.get_spatial_editor_viewport_control(spatial_editor_viewport) if spatial_editor_viewport else null
 
