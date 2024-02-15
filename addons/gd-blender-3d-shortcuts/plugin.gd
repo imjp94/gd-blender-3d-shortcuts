@@ -101,6 +101,7 @@ var _cache_transforms = [] # Nodes' local transform relative to pivot_point
 var _input_string = ""
 var _is_global_on_session = false
 var _is_warping_mouse = false
+var _already_pressing_left_mouse_button = false
 
 
 func _init():
@@ -135,12 +136,13 @@ func _ready():
 	sync_settings()
 
 func _input(event):
+	
 	if event is InputEventKey:
 		if event.pressed and not event.echo:
 			match event.keycode:
 				KEY_Z:
 					var focus = find_focused_control(get_tree().root)
-
+					
 					if focus != null:
 						if focus.get_parent_control() != null:
 							# This may be slightly fragile if this name changes or the control gets placed another level deeper internally
@@ -255,8 +257,13 @@ func find_focused_control(node):
 	return null
 
 func _forward_3d_gui_input(camera, event):
+	
 	var forward = false
 	if current_session == SESSION.NONE:
+		# solve conflict with free look
+		if event is InputEventMouseButton:
+			if event.button_index == MOUSE_BUTTON_RIGHT:
+				_already_pressing_left_mouse_button = event.is_pressed()
 		if _is_editing:
 			if event is InputEventKey:
 				if event.pressed:
@@ -269,8 +276,10 @@ func _forward_3d_gui_input(camera, event):
 							forward = true
 						KEY_S:
 							if not event.ctrl_pressed:
-								start_session(SESSION.SCALE, camera, event)
-								forward = true
+								# solve conflict with free look
+								if not _already_pressing_left_mouse_button:
+									start_session(SESSION.SCALE, camera, event)
+									forward = true
 						KEY_H:
 							commit_hide_nodes()
 						KEY_X:
@@ -563,6 +572,9 @@ func start_session(session, camera, event):
 		return
 
 	update_overlays()
+	var spatial_editor = Utils.get_spatial_editor(get_editor_interface().get_base_control())
+	var spatial_editor_viewport_container = Utils.get_spatial_editor_viewport_container(spatial_editor)
+	spatial_editor_viewports = Utils.get_spatial_editor_viewports(spatial_editor_viewport_container)
 	var spatial_editor_viewport = Utils.get_focused_spatial_editor_viewport(spatial_editor_viewports)
 	overlay_control = Utils.get_spatial_editor_viewport_control(spatial_editor_viewport) if spatial_editor_viewport else null
 
