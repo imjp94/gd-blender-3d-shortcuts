@@ -867,12 +867,12 @@ func group_selected_nodes():
 	var undo_redo = get_undo_redo()
 	undo_redo.create_action("Group Transformed Nodes", UndoRedo.MERGE_DISABLE)
 
-	undo_redo.add_do_method(group_node, "set_name", "Group")
 	undo_redo.add_do_method(parent_node, "add_child", group_node, true)
+	undo_redo.add_do_method(group_node, "set_owner", edited_scene_root)
+	undo_redo.add_do_method(group_node, "set_name", "Group")
 	undo_redo.add_do_method(group_node, "set_global_position", average_global_position)
 	# We use this node group to find group nodes when ungrouping.
 	undo_redo.add_do_method(group_node, "add_to_group", "editor_group", true)
-	undo_redo.add_do_method(group_node, "set_owner", edited_scene_root)
 	undo_redo.add_undo_method(group_node, "remove_from_group", "editor_group")
 	undo_redo.add_undo_method(parent_node, "remove_child", group_node)
 	undo_redo.add_undo_reference(group_node)
