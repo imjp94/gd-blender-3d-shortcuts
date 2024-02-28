@@ -878,9 +878,12 @@ func group_selected_nodes():
 	undo_redo.add_undo_reference(group_node)
 
 	for node in selected_nodes:
-		undo_redo.add_do_method(node, "reparent", group_node)
+		undo_redo.add_do_method(node.get_parent(), "remove_child", node)
+		undo_redo.add_do_method(group_node, "add_child", node)
+		undo_redo.add_do_method(node, "set_global_position", node.global_position)
 		undo_redo.add_do_method(node, "set_owner", edited_scene_root)
-		undo_redo.add_undo_method(node, "reparent", node.get_parent())
+		undo_redo.add_undo_method(group_node, "remove_child", node)
+		undo_redo.add_undo_method(node.get_parent(), "add_child", node)
 		undo_redo.add_undo_method(node.get_parent(), "move_child", node, node.get_index())
 		undo_redo.add_undo_method(node, "set_global_position", node.global_position)
 		undo_redo.add_undo_method(node, "set_owner", node.owner)
