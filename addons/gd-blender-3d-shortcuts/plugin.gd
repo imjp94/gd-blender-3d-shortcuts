@@ -150,7 +150,7 @@ func _input(event):
 									debug_draw_pie_menu.hide()
 									get_viewport().set_input_as_handled()
 								else:
-									if not (event.ctrl_pressed or event.alt_pressed or event.shift_pressed) and current_session == SESSION.NONE:
+									if not (event.ctrl_pressed or event.alt_pressed or event.shift_pressed or event.meta_pressed) and current_session == SESSION.NONE:
 										show_debug_draw_pie_menu()
 										get_viewport().set_input_as_handled()
 
@@ -558,6 +558,10 @@ func update_pivot_point():
 func start_session(session, camera, event):
 	if get_editor_interface().get_selection().get_transformable_selected_nodes().size() == 0:
 		return
+
+	if event.meta_pressed
+		return
+
 	current_session = session
 	_camera = camera
 	_is_global_on_session = is_global
