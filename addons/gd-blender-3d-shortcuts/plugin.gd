@@ -58,6 +58,9 @@ enum SESSION {
 	NONE
 }
 
+var pie_menu_scene
+var pie_menu_group_scene
+
 var translate_snap_line_edit
 var rotate_snap_line_edit
 var scale_snap_line_edit
@@ -125,8 +128,13 @@ func _ready():
 	local_space_button.connect("toggled", _on_local_space_button_toggled)
 	snap_button = Utils.get_spatial_editor_snap_button(spatial_editor)
 	snap_button.connect("toggled", _on_snap_button_toggled)
-	debug_draw_pie_menu = PieMenuGroupScn.instantiate()
-	debug_draw_pie_menu.populate_menu(DEBUG_DRAW_OPTIONS, PieMenuScn.instantiate())
+	
+	pie_menu_group_scene = PieMenuGroupScn.instantiate()
+	debug_draw_pie_menu = pie_menu_group_scene
+	
+	pie_menu_scene = PieMenuScn.instantiate()
+	debug_draw_pie_menu.populate_menu(DEBUG_DRAW_OPTIONS, pie_menu_scene)
+	
 	debug_draw_pie_menu.theme_source_node = spatial_editor
 	debug_draw_pie_menu.connect("item_focused", _on_PieMenu_item_focused)
 	debug_draw_pie_menu.connect("item_selected", _on_PieMenu_item_selected)
@@ -134,6 +142,10 @@ func _ready():
 	if spatial_editor_viewport_container:
 		spatial_editor_viewports = Utils.get_spatial_editor_viewports(spatial_editor_viewport_container)
 	sync_settings()
+
+func _exit_tree():
+	pie_menu_scene.queue_free()
+	pie_menu_group_scene.queue_free()
 
 func _input(event):
 	if event is InputEventKey:
