@@ -137,7 +137,7 @@ func _ready():
 
 func _input(event):
 	if event is InputEventKey:
-		if event.pressed and not event.echo:
+		if event.pressed and not event.echo and not event.meta_pressed: # Check meta modifier to avoid conflict with Mac command
 			match event.keycode:
 				KEY_Z:
 					var focus = find_focused_control(get_tree().root)
@@ -264,7 +264,7 @@ func _forward_3d_gui_input(camera, event):
 				_is_pressing_right_mouse_button = event.is_pressed()
 		if _is_editing:
 			if event is InputEventKey:
-				if event.pressed:
+				if event.pressed and not event.meta_pressed: # Check meta modifier to avoid conflict with Mac command
 					match event.keycode:
 						KEY_G:
 							start_session(SESSION.TRANSLATE, camera, event)
@@ -301,7 +301,7 @@ func _forward_3d_gui_input(camera, event):
 				precision_mode = event.pressed
 				forward = true
 
-			if event.pressed:
+			if event.pressed and not event.meta_pressed: # Check meta modifier to avoid conflict with Mac command
 				var event_text = event.as_text()
 				if append_input_string(event_text):
 					return true
