@@ -279,7 +279,10 @@ func _forward_3d_gui_input(camera, event):
 									start_session(SESSION.SCALE, camera, event)
 									forward = true
 						KEY_H:
-							commit_hide_nodes()
+							if event.alt_pressed:
+								commit_unhide_nodes()
+							else:
+								commit_hide_nodes()
 						KEY_X:
 							if event.shift_pressed:
 								delete_selected_nodes()
@@ -623,6 +626,14 @@ func commit_hide_nodes():
 	undo_redo.create_action("Hide Nodes")
 	undo_redo.add_do_method(Utils, "hide_nodes", nodes, true)
 	undo_redo.add_undo_method(Utils, "hide_nodes", nodes, false)
+	undo_redo.commit_action()
+
+func commit_unhide_nodes():
+	var undo_redo = get_undo_redo()
+	var nodes = get_editor_interface().get_selection().get_transformable_selected_nodes()
+	undo_redo.create_action("Unhide Nodes")
+	undo_redo.add_do_method(Utils, "hide_nodes", nodes, false)
+	undo_redo.add_undo_method(Utils, "hide_nodes", nodes, true)
 	undo_redo.commit_action()
 
 ## Opens a popup dialog to confirm deletion of selected nodes.
