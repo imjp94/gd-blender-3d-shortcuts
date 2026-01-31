@@ -58,9 +58,9 @@ enum SESSION {
 	NONE
 }
 
-var translate_snap_line_edit
-var rotate_snap_line_edit
-var scale_snap_line_edit
+var translate_snap_editor_spin_slider
+var rotate_snap_editor_spin_slider
+var scale_snap_editor_spin_slider
 var local_space_button
 var snap_button
 var overlay_control
@@ -114,13 +114,13 @@ func _init():
 func _ready():
 	var spatial_editor = Utils.get_spatial_editor(get_editor_interface().get_base_control())
 	var snap_dialog = Utils.get_snap_dialog(spatial_editor)
-	var snap_dialog_line_edits = Utils.get_snap_dialog_line_edits(snap_dialog)
-	translate_snap_line_edit = snap_dialog_line_edits[0]
-	rotate_snap_line_edit = snap_dialog_line_edits[1]
-	scale_snap_line_edit = snap_dialog_line_edits[2]
-	translate_snap_line_edit.connect("text_changed", _on_snap_value_changed.bind(SESSION.TRANSLATE))
-	rotate_snap_line_edit.connect("text_changed", _on_snap_value_changed.bind(SESSION.ROTATE))
-	scale_snap_line_edit.connect("text_changed", _on_snap_value_changed.bind(SESSION.SCALE))
+	var snap_dialog_editor_spin_slider = Utils.get_snap_dialog_editor_spin_slider(snap_dialog)
+	translate_snap_editor_spin_slider = snap_dialog_editor_spin_slider[0]
+	rotate_snap_editor_spin_slider = snap_dialog_editor_spin_slider[1]
+	scale_snap_editor_spin_slider = snap_dialog_editor_spin_slider[2]
+	translate_snap_editor_spin_slider.connect("value_changed", _on_snap_value_changed.bind(SESSION.TRANSLATE))
+	rotate_snap_editor_spin_slider.connect("value_changed", _on_snap_value_changed.bind(SESSION.ROTATE))
+	scale_snap_editor_spin_slider.connect("value_changed", _on_snap_value_changed.bind(SESSION.SCALE))
 	local_space_button = Utils.get_spatial_editor_local_space_button(spatial_editor)
 	local_space_button.connect("toggled", _on_local_space_button_toggled)
 	snap_button = Utils.get_spatial_editor_snap_button(spatial_editor)
@@ -179,14 +179,14 @@ func _input(event):
 					Input.warp_mouse(overlay_control.global_position + warp_pos)
 					_is_warping_mouse = true
 
-func _on_snap_value_changed(text, session):
+func _on_snap_value_changed(value, session):
 	match session:
 		SESSION.TRANSLATE:
-			translate_snap = text.to_float()
+			translate_snap = value
 		SESSION.ROTATE:
-			rotate_snap = deg_to_rad(text.to_float())
+			rotate_snap = deg_to_rad(value)
 		SESSION.SCALE:
-			scale_snap = text.to_float() / 100.0
+			scale_snap = value / 100.0
 
 func _on_PieMenu_item_focused(menu, index):
 	var value = menu.buttons[index].get_meta("value", 0)
@@ -707,12 +707,12 @@ func clear_session():
 	axis_im.clear_surfaces()
 
 func sync_settings():
-	if translate_snap_line_edit:
-		translate_snap = translate_snap_line_edit.text.to_float()
-	if rotate_snap_line_edit:
-		rotate_snap = deg_to_rad(rotate_snap_line_edit.text.to_float())
-	if scale_snap_line_edit:
-		scale_snap = scale_snap_line_edit.text.to_float() / 100.0
+	if translate_snap_editor_spin_slider:
+		translate_snap = translate_snap_editor_spin_slider.value
+	if rotate_snap_editor_spin_slider:
+		rotate_snap = deg_to_rad(rotate_snap_editor_spin_slider.value)
+	if scale_snap_editor_spin_slider:
+		scale_snap = scale_snap_editor_spin_slider.value / 100.0
 	if local_space_button:
 		is_global = !local_space_button.button_pressed
 	if snap_button:
