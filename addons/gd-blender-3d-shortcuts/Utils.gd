@@ -93,12 +93,12 @@ static func get_snap_dialog(spatial_editor):
 			if child.title == "Snap Settings":
 				return child
 
-static func get_snap_dialog_line_edits(snap_dialog):
-	var line_edits = []
+static func get_snap_dialog_editor_spin_slider(snap_dialog):
+	var editor_spin_slider = []
 	for child in recursive_get_children(snap_dialog):
-		if child.get_class() == "LineEdit":
-			line_edits.append(child)
-	return line_edits
+		if child.get_class() == "EditorSpinSlider":
+			editor_spin_slider.append(child)
+	return editor_spin_slider
 
 static func get_spatial_editor_local_space_button(spatial_editor):
 	var children = recursive_get_children(spatial_editor)
