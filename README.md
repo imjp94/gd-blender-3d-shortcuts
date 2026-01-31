@@ -6,7 +6,7 @@ Blender's 3D transforming shortcuts in Godot
 ![Showcase](screenshots/gd_blender_shortcuts_showcase_2.gif)
 ![Showcase](screenshots/gd_blender_shortcuts_showcase_3.gif)
 
-> This version is only compatible with **Godot 4.x**, check out [godot3](https://github.com/imjp94/gd-blender-3d-shortcuts/tree/godot3) branch for older version
+> This version is only compatible with **Godot 4.6 and onwards**, check out [godot4.5](https://github.com/imjp94/gd-blender-3d-shortcuts/tree/godot4.5)(compatible with Godot 4.0 - 4.5) or [godot3](https://github.com/imjp94/gd-blender-3d-shortcuts/tree/godot3) branch for older version
 
 ## Features
 
@@ -49,6 +49,7 @@ plug("imjp94/gd-blender-3d-shortcuts")
 - Constraint to Plane: SHIFT + (X or Y or Z)
 - Delete: X
 - Hide: H
+- Unhide: ALT + H
 - Precision Mode(while transforming with mouse): SHIFT
 - Toggle Global/Local mode(non-persistent): XX or YY or ZZ
 - Switch Spatial Editor Viewport Display Mode: Z
