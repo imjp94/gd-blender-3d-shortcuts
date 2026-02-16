@@ -412,6 +412,7 @@ func _forward_3d_draw_over_viewport(overlay):
 		SESSION.TRANSLATE:
 			var translation = _applying_transform.origin
 			overlay_label.text = ("Translate (%.3f, %.3f, %.3f) %s %s %s" % [translation.x, translation.y, translation.z, global_or_local, along_axis, snapped])
+			line_color = Color.TRANSPARENT
 		SESSION.ROTATE:
 			var rotation = _applying_transform.basis.get_euler()
 			overlay_label.text = ("Rotate (%.3f, %.3f, %.3f) %s %s %s" % [rad_to_deg(rotation.x), rad_to_deg(rotation.y), rad_to_deg(rotation.z), global_or_local, along_axis, snapped])
